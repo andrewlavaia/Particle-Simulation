@@ -6,6 +6,7 @@ priority queue to check for collisions
 import random
 import math
 import heapq
+import inspect
 from graphics import  *
 
 class Ball:
@@ -57,6 +58,7 @@ class Ball:
             return math.inf;
         return -(dvdr + math.sqrt(d)) / dvdv
 
+    # adjusts velocity vectors of two objects after a collision
     def bounceOff(that):
         dx = that.x - self.x
         dy = that.y - self.y;
@@ -79,6 +81,10 @@ class Ball:
         self.collisionCnt = self.collisionCnt + 1
         that.collisionCnt = that.collisionCnt + 1
 
+# Defines an Event that will occur at time t between objects a and b
+# if neither a & b are None -> collision with another object
+# if one of a or b is None -> collision with wall
+# if both a & b are None -> do nothing
 class Event:
     def __init__(self, t, a, b):
         self.time = t    
@@ -91,12 +97,19 @@ class Event:
         return self.time - that.time
 
     def isValid():
-        pass
+        if inspect.isInstance(a, Ball) and inspect.isInstance(b, Ball):
+            return True
+        else:
+            return False
 
+# Collision System used to predict when two objects will
+# colide and store those events in a min priority queue.
+# Also used to run simulation.
 class CollisionSystem:
-    pq = []             # priority queue    
-    t = 0.0             # simulation clock time 
-    balls = []          # List of balls
+    def __init__(self, balls):
+        self.pq = []             # priority queue    
+        self.t = 0.0             # simulation clock time 
+        self.balls = balls       # List of balls
 
     # Adds all predicted collision times with this object to priority queue
     def predict(a):
@@ -104,9 +117,9 @@ class CollisionSystem:
             return
 
         # insert collision time with all other balls into priority queue
-        for ball in balls:
-            dt = a.timeToHit(ball)
-            heapq.heappush(pq, Event(t + dt, a, balls[i]))
+        for b in balls:
+            dt = a.timeToHit(b)
+            heapq.heappush(pq, Event(t + dt, a, b))
 
         # insert time to hit walls into priority queue
 
@@ -116,6 +129,34 @@ class CollisionSystem:
         for ball in balls:
             predict(ball)
         heapq.heappush(pq, Event(0, None, None)) # needed so pq is never empty
+
+        while not pq: # !pq.isEmpty()
+            
+            # grab top item from priority queue
+            evt = heapq.heappop(pq)
+            if not evt.isValid():
+                continue
+            a = evt.a
+            b = evt.b
+
+            # move all balls
+            for ball in balls:
+                ball.move(evt.time - t)
+            t = evt.time
+
+            if a != None and b != None: # object collision
+                a.bounceOff(b)
+            elif a != None and b == None:
+                # a hits vertical wall 
+                pass
+            elif a == None and b != None:
+                # b hits horizontal wall
+                pass
+            elif a == None and b == None:
+                pass
+
+            predict(a)
+            predict(b)
 
 
 def main():
