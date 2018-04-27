@@ -41,7 +41,7 @@ class Ball:
     def update(self, window):    
         self.circle.move(self.x - self.circle.getCenter().getX(), self.y - self.circle.getCenter().getY())
 
-    # Calculates time until collision with another Ball
+    # Calculates time (in ms) until collision with another Ball
     def timeToHit(self, that):
         if self == that:
             return math.inf 
@@ -69,6 +69,7 @@ class Ball:
 
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
+    # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self):
         if self.vy > 0:
             return (self.maxHeight - self.radius - self.y) / self.vy
@@ -77,6 +78,7 @@ class Ball:
         elif (self.vy == 0):
             return math.inf
 
+    # calculates time (in ms) until collision with vertical wall
     def timeToHitVWall(self):
         if (self.vx > 0):
             return (self.maxWidth - self.radius - self.x) / self.vx
@@ -84,7 +86,6 @@ class Ball:
             return (0.0 + self.radius - self.x) / self.vx
         elif (self.vx == 0):
             return math.inf
-
 
     # adjusts velocity vectors of two objects after a collision
     def bounceOff(self, that):
@@ -95,8 +96,6 @@ class Ball:
 
         # dot product
         dvdr = dx*dvx + dy*dvy
-
-
         dist = self.radius + that.radius
 
         # calculate magnitude of force
@@ -113,10 +112,12 @@ class Ball:
         self.collisionCnt = self.collisionCnt + 1
         that.collisionCnt = that.collisionCnt + 1
 
+    # adjusts velocity of object after colliding with vertical wall
     def bounceOffVWall(self):
         self.vx = -1 * self.vx;
         self.collisionCnt = self.collisionCnt + 1
 
+    # adjusts velocity of object after colliding with horizontal wall
     def bounceOffHWall(self):
         self.vy = -1 * self.vy; 
         self.collisionCnt = self.collisionCnt + 1
@@ -145,6 +146,7 @@ class Event:
     def __lt__(self, that):
         return self.time <= that.time
 
+    # check if event was invalidated from prior collision
     def isValid(self):
         if (self.a is not None and self.countA != self.a.collisionCnt):
             return False
@@ -156,12 +158,13 @@ class Event:
 # colide and store those events in a min priority queue.
 # Also used to run simulation.
 class CollisionSystem:
-    drawInterval = 1000/120         # in ms
-    
+    FPS = 120          
+
     def __init__(self, balls):
         self.pq = []                # priority queue    
-        self.time = 0.0             # simulation clock time      
+        self.evtTime = 0.0          # simulation clock time      
         self.balls = list(balls)    # copy of list of balls
+        self.lastFrameTime = time.time()
 
 
     # Adds all predicted collision times with this object to priority queue
@@ -169,88 +172,97 @@ class CollisionSystem:
         if a is None:
             return
         
-        # insert collision time with all other balls into priority queue
+        # insert predicted collision time with every other 
+        # ball into the priority queue
         for b in self.balls:
             dt = a.timeToHit(b)
-            evt = Event(self.time + dt, a, b)
-            if self.time + dt <= limit:
+            evt = Event(self.evtTime + dt, a, b)
+            if self.evtTime + dt <= limit:
                 heapq.heappush(self.pq, evt)
         
-        # insert collision time to hit walls into priority queue
+        # insert collision time with every wall into 
+        # the priority queue
         dt = a.timeToHitVWall()
-        evt = Event(self.time + dt, a, None)
-        if self.time + dt <= limit:
+        evt = Event(self.evtTime + dt, a, None)
+        if self.evtTime + dt <= limit:
             heapq.heappush(self.pq, evt)
-
         dt = a.timeToHitHWall()
-        evt = Event(self.time + dt, None, a)
-        if self.time + dt <= limit:   
+        evt = Event(self.evtTime + dt, None, a)
+        if self.evtTime + dt <= limit:   
             heapq.heappush(self.pq, evt) 
         
 
-    # Initial draw and inserts initial predicted collision 
-    # times into priority queue
+    # Pre-populates priority queue with all predicted
+    # collisions and performs the initial draw call for
+    # each object (each object is only drawn once)
     def populatePQ(self, win):
         for ball in self.balls:
             ball.draw(win)
             self.predict(ball, 10000)
-        heapq.heappush(self.pq, Event(0, None, None)) # needed for first draw call
 
     # Processes the events in priority queue until
     # pq is empty or time limit reached    
     def simulate(self, window, limit):
-        while len(self.pq) > 0 and self.time < limit:
-            # grab top event from priority queue
-            evt = heapq.heappop(self.pq)
-
-            # skip event if no longer valid
-            if not evt.isValid():
-                continue
-            a = evt.a
-            b = evt.b
+        while self.evtTime < limit:
+            # dt is the time delta in seconds (float)
+            currentTime = time.time()
+            elapsed = currentTime - self.lastFrameTime
+            self.lastFrameTime = currentTime
             
-            # move all balls in linear line 
+            # force updates to be constant
+            fixedFrameTime = 1.0/CollisionSystem.FPS
+            sleepTime = fixedFrameTime - elapsed
+            if sleepTime > 0:
+                time.sleep(sleepTime)
+            
+            # update game logic
             for ball in self.balls:
-                ball.move(evt.time - self.time)
+                ball.move(fixedFrameTime)  # moves each ball in linear line   
 
-            '''
-            # draw while we wait for time to catch up to event
-            while evt.time > self.time:
-                time.sleep(1/10000)
-                self.redraw(window) 
-                self.time = self.time + 5
-            '''
+            self.evtTime = self.evtTime + fixedFrameTime
 
-            self.time = evt.time 
+            # process all events that occurred last frame
+            while len(self.pq) > 0 and self.pq[0].time < self.evtTime:
+                # grab top event from priority queue
+                evt = heapq.heappop(self.pq)
 
-            # process collisions that will occur 
-            # before next draw call
-            if a is not None and b is not None: 
-                a.bounceOff(b)
-                self.predict(a, limit)
-                self.predict(b, limit)
-            elif a is not None and b is None:
-                a.bounceOffVWall()
-                self.predict(a, limit)
-            elif a is None and b is not None:
-                b.bounceOffHWall()
-                self.predict(b, limit)
-            
-            # process draw call
-            elif a is None and b is None:
-                self.redraw(window)
+                # skip event if no longer valid
+                if not evt.isValid():
+                    continue
+                a = evt.a
+                b = evt.b
 
-    # Update position of all circles and push next draw event to pq
+                # process collisions 
+                if a is not None and b is not None: 
+                    a.bounceOff(b)
+                    self.predict(a, 10000)
+                    self.predict(b, 10000)
+                elif a is not None and b is None:
+                    a.bounceOffVWall()
+                    self.predict(a, 10000)
+                elif a is None and b is not None:
+                    b.bounceOffHWall()
+                    self.predict(b, 10000)
+                elif a is None and b is None:
+                    pass
+
+            # draw updates to window
+            self.redraw(window)
+
+            # check if user wants to end simulation
+            if window.checkMouse() is not None:
+                return
+
+    # Update position of all objects on window
     def redraw(self, win):
-        # update position of circle objects
         for ball in self.balls:
             ball.update(win)  
     
         # used to limit CPU calcs and end program quicker
-        time.sleep(1/10000)
+        #time.sleep(1/10000)
 
         # push next draw call to pq
-        heapq.heappush(self.pq, Event(self.time + CollisionSystem.drawInterval, None, None))
+        #heapq.heappush(self.pq, Event(self.time + CollisionSystem.drawInterval, None, None))
 
 def main():
     win = GraphWin('Bouncing Balls', 800, 600)
@@ -258,39 +270,27 @@ def main():
 
     # Create a list of random balls
     balls = []
-    n = 100
+    n = 50
     for i in range(0, n):
         ballRadius = 10
         randX = random.uniform(0 + ballRadius, win.width - ballRadius)
         randY = random.uniform(0 + ballRadius, win.height - ballRadius)
-        randVX = random.uniform(-.1, .1)
-        randVY = random.uniform(-.1, .1)
+        randVX = random.uniform(-100, 100)
+        randVY = random.uniform(-100, 100)
         balls.append(Ball(randX, randY, randVX, randVY, ballRadius, win.width, win.height))
- 
+    
+    # add one larger ball
+    randX = random.uniform(0 + ballRadius, win.width - ballRadius)
+    randY = random.uniform(0 + ballRadius, win.height - ballRadius)
     balls.append(Ball(randX, randY, randVX, randVY, 50, win.width, win.height))
+    
+    # initialize collision system
     cs = CollisionSystem(balls)
     cs.populatePQ(win)
-    cs.simulate(win, 100000) 
-    
-    '''
-    # TESTS
-    b1 = Ball(1, 1, 1, 1, 5, 350, 350)
-    b2 = b1
-    b3 = Ball(200, 200, 1, 1, 5, 350, 350)
-    e1 = Event(100, b1, b3)
-    e2 = Event(200, b1, b3)
-    e3 = Event(200, b1, b2)
-    print(e3.isValid())
-    print(Event(99999, b1, b2).isValid())
-    assert 5 == 2 # check if assert is working
-    assert e1 < e2
-    assert e2 > e1
-    assert e2 < e1 
-    
-    '''
-    while win.checkMouse() is None:
-        pass
-    
+
+    # run simulation
+    cs.simulate(win, 10000) 
+  
     win.close
 
 main()
