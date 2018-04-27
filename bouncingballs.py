@@ -6,7 +6,7 @@ priority queue to check for collisions
 import random
 import math
 import heapq
-import inspect
+import time
 from graphics import  *
 
 # Defines a Ball object which can be used in the Collision Simulator
@@ -18,7 +18,7 @@ class Ball:
         self.vy = vy
         self.radius = r                     # size of Ball in pixels
         self.circle = Circle(Point(x, y), r)
-        self.mass = 1                       # used for collision physics
+        self.mass = .5                       # used for collision physics
         self.maxWidth = windowWidth         # highest possible x position
         self.maxHeight = windowHeight       # highest possible y position
         self.collisionCnt = 0               # number of pending collisions
@@ -32,7 +32,7 @@ class Ball:
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
 
-    # Draws the a Circle to window
+    # Draws the Circle to a window
     def draw(self, window):
         self.circle.draw(window)
     
@@ -56,7 +56,6 @@ class Ball:
         # collision prediction
         # d = (Δv*Δr)^2 − (Δv*Δv)(Δr*Δr − σ^2)
         dvdr = dx*dvx + dy*dvy
-        #print(dvdr)
         if dvdr > 0: 
             return math.inf
         dvdv = dvx*dvx + dvy*dvy
@@ -64,27 +63,26 @@ class Ball:
         sigma = self.radius + that.radius
         
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
-        if d <= 0: # don't want to divide by zero
+        if d < 0: 
             return math.inf
-        #print ("collision!!!") 
-        #print(-(dvdr + math.sqrt(d)) / dvdv)
-        return -(dvdr + math.sqrt(d)) / dvdv
 
-    def timeToHitVWall(self):
-        if (self.vy == 0):
-            return math.inf
-        elif (self.vy > 0.0):
-            return (self.maxHeight - self.radius - self.y) / self.vy
-        elif (self.vy < 0.0):
-            return (0.0 + self.radius - self.y) / self.vy
+        return -1 * (dvdr + math.sqrt(d)) / dvdv
 
     def timeToHitHWall(self):
-        if (self.vx == 0.0):
+        if self.vy > 0:
+            return (self.maxHeight - self.radius - self.y) / self.vy
+        elif (self.vy < 0):
+            return (0.0 + self.radius - self.y) / self.vy
+        elif (self.vy == 0):
             return math.inf
-        elif (self.vx > 0.0):
+
+    def timeToHitVWall(self):
+        if (self.vx > 0):
             return (self.maxWidth - self.radius - self.x) / self.vx
-        elif (self.vx < 0.0):
+        elif (self.vx < 0):
             return (0.0 + self.radius - self.x) / self.vx
+        elif (self.vx == 0):
+            return math.inf
 
 
     # adjusts velocity vectors of two objects after a collision
@@ -93,29 +91,33 @@ class Ball:
         dy = that.y - self.y
         dvx = that.vx - self.vx 
         dvy = that.vy - self.vy
+
+        # dot product
         dvdr = dx*dvx + dy*dvy
+
+
         dist = self.radius + that.radius
 
-        # calculate impulse J
+        # calculate magnitude of force
         # J = 2 * mass[i] * mass[j] (Δv * Δr) / σ(mass[i] + mass[j])
         J = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
-        Jx = J * dx / dist
-        Jy = J * dy / dist
-        self.vx += Jx / self.mass
-        self.vy += Jy / self.mass
-        that.vx -= Jx / that.mass
-        that.vy -= Jy / that.mass
+        fx = J * dx / dist
+        fy = J * dy / dist
+        self.vx = self.vx + (fx / self.mass)
+        self.vy = self.vy + (fy / self.mass)
+        that.vx = self.vx - (fx / that.mass)
+        that.vy = self.vy - (fy / that.mass)
 
         # increase collision count
         self.collisionCnt = self.collisionCnt + 1
         that.collisionCnt = that.collisionCnt + 1
 
     def bounceOffVWall(self):
-        self.vy = -self.vy;
+        self.vy = -1 * self.vy;
         self.collisionCnt = self.collisionCnt + 1
 
     def bounceOffHWall(self):
-        self.vx = -self.vx; 
+        self.vx = -1 * self.vx; 
         self.collisionCnt = self.collisionCnt + 1
 
 
@@ -128,82 +130,89 @@ class Event:
         self.time = t    
         self.a = a
         self.b = b
-        self.countA = 0
-        self.countB = 0
+        if a is not None:
+            self.countA = a.collisionCnt
+        else:
+            self.countA = -1
+
+        if b is not None:
+            self.countB = b.collisionCnt
+        else:
+            self.countB = -1
     
     # comparator
     def __lt__(self, that):
         return self.time <= that.time
 
     def isValid(self):
-        if not math.isnan(self.time) and self.time < 1000:
-            return True
-        else:
-            return False  
+        if (self.a is not None and self.countA != self.a.collisionCnt):
+            return False
+        if (self.b is not None and self.countB != self.b.collisionCnt):
+            return False
+        return True
 
 # Collision System used to predict when two objects will
 # colide and store those events in a min priority queue.
 # Also used to run simulation.
 class CollisionSystem:
+    updatesPerClock = 0.5           # number of move calls per clock tick
     def __init__(self, balls):
         self.pq = []                # priority queue    
         self.time = 0.0             # simulation clock time 
-        self.balls = balls          # List of balls
+        self.balls = list(balls)    # copy of list of balls
 
     # Adds all predicted collision times with this object to priority queue
-    def predict(self, a):
+    def predict(self, a, limit):
         if a is None:
             return
-        '''
+        
         # insert collision time with all other balls into priority queue
         for b in self.balls:
             dt = a.timeToHit(b)
-            evt = Event(self.time + dt, a, b)
-            if evt.isValid():
-                heapq.heappush(self.pq, evt)
-        '''
+            if (self.time + dt) <= limit:
+                heapq.heappush(self.pq, Event(self.time + dt, a, b))
+        
 
         # insert collision time to hit walls into priority queue
         dt = a.timeToHitVWall()/1000
         evt = Event(self.time + dt, a, None)
-        if evt.isValid():
-            heapq.heappush(self.pq, evt)
+        heapq.heappush(self.pq, evt)
 
         dt = a.timeToHitHWall()/1000
         evt = Event(self.time + dt, None, a)   
-        if evt.isValid():
-            heapq.heappush(self.pq, evt) 
+        heapq.heappush(self.pq, evt) 
         
 
     # Inserts predicted collision times into priority queue
-    # Processes the events in priority queue
+
     def populatePQ(self, win):
         for ball in self.balls:
             ball.draw(win)
-            self.predict(ball)
+            self.predict(ball, 50)
         heapq.heappush(self.pq, Event(0, None, None)) # needed so pq is never empty initially
 
-    def simulate(self, win):
+        # Processes the events in priority queue    
+    def simulate(self, win, limit):
+        
         while len(self.pq) > 0: # not empty
             print(len(self.pq))
             # grab top item from priority queue
             evt = heapq.heappop(self.pq)
-            print(evt.time)
+            print(len(self.pq))
+            #print(evt.time)
             if not evt.isValid():
+                #print("not valid")
                 continue
             a = evt.a
             b = evt.b
 
-
             # move all balls
             for ball in self.balls:
                 ball.move(evt.time - self.time)
-                #ball.move(.5)
-            #self.time = evt.time
+            self.time = evt.time
 
             if a is not None and b is not None: # object collision
-                pass
-                #a.bounceOff(b)
+                a.bounceOff(b)
             elif a is not None and b is None:
                 a.bounceOffVWall()
                 pass
@@ -212,15 +221,20 @@ class CollisionSystem:
                 pass
             elif a is None and b is None:
                 pass
-                #for ball in self.balls:
-            
-            for ball in self.balls:
-                ball.update(win)                    
+
+            self.redraw(win, .5)    
 
             # update all collision predictions for objects a and b
-            self.predict(a)
-            self.predict(b)
+            self.predict(a, limit)
+            self.predict(b, limit)
 
+    def redraw(self, win, limit):
+        for ball in self.balls:
+            ball.update(win)  
+
+        time.sleep(20/1000)         
+        if self.time < limit:
+            heapq.heappush(self.pq, Event(self.time + 1.0/self.updatesPerClock, None, None))
 '''
 class Pnt:
     x = 1
@@ -241,7 +255,7 @@ def main():
 
     # Create a list of random balls
     balls = []
-    n = 10
+    n = 5
     for i in range(0, n):
         ballRadius = 5
         randX = random.uniform(0 + ballRadius, win.width - ballRadius)
@@ -252,7 +266,7 @@ def main():
  
     cs = CollisionSystem(balls)
     cs.populatePQ(win)
-    
+    cs.simulate(win, 100) 
     
     '''
     # TESTS
@@ -273,8 +287,8 @@ def main():
     # Simulation Loop
     '''
     while win.checkMouse() is None:
+        pass
         
-        cs.simulate(win) 
         #pass
         #for ball in cs.balls:
             #ball.update(win)
