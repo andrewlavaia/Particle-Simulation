@@ -18,7 +18,7 @@ class Ball:
         self.vy = vy
         self.radius = r                     # size of Ball in pixels
         self.circle = Circle(Point(x, y), r)
-        self.mass = .5                       # used for collision physics
+        self.mass = 1                       # used for collision physics
         self.maxWidth = windowWidth         # highest possible x position
         self.maxHeight = windowHeight       # highest possible y position
         self.collisionCnt = 0               # number of pending collisions
@@ -171,9 +171,9 @@ class CollisionSystem:
         # insert collision time with all other balls into priority queue
         for b in self.balls:
             dt = a.timeToHit(b)
-            if (self.time + dt) <= limit:
-                pass
-                #heapq.heappush(self.pq, Event(self.time + dt, a, b))
+            evt = Event(self.time + dt, a, b)
+            if (dt) <= limit:
+                heapq.heappush(self.pq, evt)
         
 
         # insert collision time to hit walls into priority queue
@@ -201,7 +201,7 @@ class CollisionSystem:
             print(len(self.pq))
             # grab top item from priority queue
             evt = heapq.heappop(self.pq)
-            print(len(self.pq))
+            #print(len(self.pq))
             #print(evt.time)
             if not evt.isValid():
                 continue
@@ -214,16 +214,16 @@ class CollisionSystem:
             self.time = evt.time
 
             if a is not None and b is not None: # object collision
-                #a.bounceOff(b)
-                pass
+                a.bounceOff(b)
+                #pass
             elif a is not None and b is None:
                 a.bounceOffVWall()
-                pass
             elif a is None and b is not None:
                 b.bounceOffHWall()
-                pass
             elif a is None and b is None:
                 self.redraw(win)
+
+
                
             # update all collision predictions for objects a and b
             self.predict(a, limit)
@@ -245,7 +245,7 @@ def main():
     balls = []
     n = 5
     for i in range(0, n):
-        ballRadius = 5
+        ballRadius = 20
         randX = random.uniform(0 + ballRadius, win.width - ballRadius)
         randY = random.uniform(0 + ballRadius, win.height - ballRadius)
         randVX = random.uniform(-1, 1)
