@@ -113,11 +113,11 @@ class Ball:
         that.collisionCnt = that.collisionCnt + 1
 
     def bounceOffVWall(self):
-        self.vy = -1 * self.vy;
+        self.vx = -1 * self.vx;
         self.collisionCnt = self.collisionCnt + 1
 
     def bounceOffHWall(self):
-        self.vx = -1 * self.vx; 
+        self.vy = -1 * self.vy; 
         self.collisionCnt = self.collisionCnt + 1
 
 
@@ -155,7 +155,9 @@ class Event:
 # colide and store those events in a min priority queue.
 # Also used to run simulation.
 class CollisionSystem:
-    updatesPerClock = 0.5           # number of move calls per clock tick
+    movesPerDraw = .5               # number of move calls per draw call
+    FPS = 120                       # frames per second
+    
     def __init__(self, balls):
         self.pq = []                # priority queue    
         self.time = 0.0             # simulation clock time 
@@ -170,15 +172,16 @@ class CollisionSystem:
         for b in self.balls:
             dt = a.timeToHit(b)
             if (self.time + dt) <= limit:
-                heapq.heappush(self.pq, Event(self.time + dt, a, b))
+                pass
+                #heapq.heappush(self.pq, Event(self.time + dt, a, b))
         
 
         # insert collision time to hit walls into priority queue
-        dt = a.timeToHitVWall()/1000
+        dt = a.timeToHitVWall()
         evt = Event(self.time + dt, a, None)
         heapq.heappush(self.pq, evt)
 
-        dt = a.timeToHitHWall()/1000
+        dt = a.timeToHitHWall()
         evt = Event(self.time + dt, None, a)   
         heapq.heappush(self.pq, evt) 
         
@@ -188,7 +191,7 @@ class CollisionSystem:
     def populatePQ(self, win):
         for ball in self.balls:
             ball.draw(win)
-            self.predict(ball, 50)
+            self.predict(ball, 10000)
         heapq.heappush(self.pq, Event(0, None, None)) # needed so pq is never empty initially
 
         # Processes the events in priority queue    
@@ -201,18 +204,18 @@ class CollisionSystem:
             print(len(self.pq))
             #print(evt.time)
             if not evt.isValid():
-                #print("not valid")
                 continue
             a = evt.a
             b = evt.b
 
             # move all balls
             for ball in self.balls:
-                ball.move(evt.time - self.time)
+                ball.move(evt.time - self.time) 
             self.time = evt.time
 
             if a is not None and b is not None: # object collision
-                a.bounceOff(b)
+                #a.bounceOff(b)
+                pass
             elif a is not None and b is None:
                 a.bounceOffVWall()
                 pass
@@ -220,34 +223,19 @@ class CollisionSystem:
                 b.bounceOffHWall()
                 pass
             elif a is None and b is None:
-                pass
-
-            self.redraw(win, .5)    
-
+                self.redraw(win)
+               
             # update all collision predictions for objects a and b
             self.predict(a, limit)
             self.predict(b, limit)
 
-    def redraw(self, win, limit):
+    def redraw(self, win):
         for ball in self.balls:
             ball.update(win)  
+      
+        time.sleep(1/CollisionSystem.FPS)
+        heapq.heappush(self.pq, Event(self.time + 1.0/CollisionSystem.movesPerDraw, None, None))
 
-        time.sleep(20/1000)         
-        if self.time < limit:
-            heapq.heappush(self.pq, Event(self.time + 1.0/self.updatesPerClock, None, None))
-'''
-class Pnt:
-    x = 1
-    y = 2
-
-class PntHolder:
-    def __init__(self, points):
-        self.points = points
-
-    def iterate(self, other):
-        for each in self.points:
-            print(each.x)
-'''
 
 def main():
     win = GraphWin('Bouncing Balls', 500, 500)
@@ -266,7 +254,7 @@ def main():
  
     cs = CollisionSystem(balls)
     cs.populatePQ(win)
-    cs.simulate(win, 100) 
+    cs.simulate(win, 10000) 
     
     '''
     # TESTS
