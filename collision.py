@@ -1,4 +1,5 @@
-'''Module: collisions.py
+'''
+Module: collisions.py
 Defines CollisionSystem which handles 
 collision events between two particles.
 '''
@@ -42,7 +43,7 @@ class Event:
 class CollisionSystem:
     def __init__(self, particles):
         self.pq = []                		# priority queue         
-        self.particles = particles    		# list of particles
+        self.particles = particles    		# list of particles as a reference
 
         # initalize pq with initial predictions
         for particle in particles:

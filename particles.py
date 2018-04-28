@@ -1,6 +1,7 @@
-'''Program: particles.py
-Defines different types of particles to 
-be used in simulation
+'''
+Module: particles.py
+Defines different types of particles
+for use in particle simulation
 '''
 
 import math
@@ -15,18 +16,19 @@ class Ball:
         self.vx = vx                        # velocity  
         self.vy = vy
         self.radius = r                     # size of Ball in pixels
-        self.circle = Circle(Point(x, y), r)
         self.mass = 1                       # used for collision physics
-        self.maxWidth = windowWidth         # highest possible x position
-        self.maxHeight = windowHeight       # highest possible y position
+        self.circle = Circle(Point(x, y), r)
+        self.maxX = windowWidth         	# highest possible x position
+        self.maxY = windowHeight       		# highest possible y position
         
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
                                             # invalidated
  
+ 	# equality comparator
     def __eq__(self, other):
-        return ((self.x, self.y, self.circle) ==
-                (other.x, other.y, other.circle))
+        return ((self.x, self.y, self.circle, self.collisionCnt) ==
+                (other.x, other.y, other.circle, other.collisionCnt))
 
     # Moves ball by time * speed
     def move(self, dt):   
@@ -72,7 +74,7 @@ class Ball:
     # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self):
         if self.vy > 0:
-            return (self.maxHeight - self.radius - self.y) / self.vy
+            return (self.maxY - self.radius - self.y) / self.vy
         elif (self.vy < 0):
             return (0.0 + self.radius - self.y) / self.vy
         elif (self.vy == 0):
@@ -81,7 +83,7 @@ class Ball:
     # calculates time (in ms) until collision with vertical wall
     def timeToHitVWall(self):
         if (self.vx > 0):
-            return (self.maxWidth - self.radius - self.x) / self.vx
+            return (self.maxX - self.radius - self.x) / self.vx
         elif (self.vx < 0):
             return (0.0 + self.radius - self.x) / self.vx
         elif (self.vx == 0):

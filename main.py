@@ -1,6 +1,8 @@
-'''Program: main.py
-Particle simulation of different types
-of objects colliding with one another
+'''
+Program: main.py
+Runs a particle simulation that draws 
+different types of particles colliding 
+with one another
 '''
 
 import random
@@ -13,9 +15,10 @@ def main():
     win = GraphWin('Particle Simulation', 800, 600)
     win.setBackground('white')
 
-    # Create a list of random balls
     particles = []
-    n = 10
+
+    # Create a list of random balls
+    n = 50
     for i in range(0, n):
         ballRadius = 5
         randX = random.uniform(0 + ballRadius, win.width - ballRadius)
