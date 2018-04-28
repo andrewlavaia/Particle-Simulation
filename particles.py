@@ -38,7 +38,7 @@ class Ball:
         self.circle.draw(window)
     
     # Moves Circle to current position on window 
-    def update(self, window):    
+    def render(self, window):    
         self.circle.move(self.x - self.circle.getCenter().getX(), self.y - self.circle.getCenter().getY())
 
     # Calculates time (in ms) until collision with another Ball

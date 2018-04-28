@@ -1,10 +1,8 @@
 '''Module: collisions.py
-Defines CollisionSystem which provides a 
-a simulation method to visually depict 
-collisions between two particles.
+Defines CollisionSystem which handles 
+collision events between two particles.
 '''
 
-import time
 import heapq
 
 # Defines an Event that will occur at time t between particles a and b
@@ -38,23 +36,20 @@ class Event:
             return False
         return True
 
-
-
 # Collision System is used to predict when two particles will
 # colide and store those events in a min priority queue.
 # Also used to run simulation.
 class CollisionSystem:
-    FPS = 120          
-
     def __init__(self, particles):
-        self.pq = []                		# priority queue    
-        self.evtTime = 0.0         			# simulation clock time      
-        self.particles = list(particles)    # defensive copy of list of particles
-        self.lastFrameTime = time.time()	# time that last frame occurred
+        self.pq = []                		# priority queue         
+        self.particles = particles    		# list of particles
 
+        # initalize pq with initial predictions
+        for particle in particles:
+        	self.predict(particle, 0.0, 10000)	
 
     # Adds all predicted collision times with this particle to priority queue
-    def predict(self, a, limit):
+    def predict(self, a, simTime, limit):
         if a is None:
             return
         
@@ -62,84 +57,44 @@ class CollisionSystem:
         # particle into the priority queue
         for b in self.particles:
             dt = a.timeToHit(b)
-            evt = Event(self.evtTime + dt, a, b)
-            if self.evtTime + dt <= limit:
+            evt = Event(simTime + dt, a, b)
+            if simTime + dt <= limit:
                 heapq.heappush(self.pq, evt)
         
         # insert collision time with every wall into 
         # the priority queue
         dt = a.timeToHitVWall()
-        evt = Event(self.evtTime + dt, a, None)
-        if self.evtTime + dt <= limit:
+        evt = Event(simTime + dt, a, None)
+        if simTime + dt <= limit:
             heapq.heappush(self.pq, evt)
         dt = a.timeToHitHWall()
-        evt = Event(self.evtTime + dt, None, a)
-        if self.evtTime + dt <= limit:   
+        evt = Event(simTime + dt, None, a)
+        if simTime + dt <= limit:   
             heapq.heappush(self.pq, evt) 
-        
 
-    # Pre-populates priority queue with all predicted
-    # collisions and performs the initial draw call for
-    # each particle (each particle is only drawn once)
-    def populatePQ(self, window):
-        for particle in self.particles:
-            particle.draw(window)
-            self.predict(particle, 10000)
+    # Processes all events in priority queue that
+    # occurred before a given time
+    def processEvents(self, simTime):
+    	while len(self.pq) > 0 and self.pq[0].time < simTime:
+            # grab top event from priority queue
+            evt = heapq.heappop(self.pq)
 
-    # Processes the events in priority queue until
-    # pq is empty or time limit reached    
-    def simulate(self, window, limit):
-        while self.evtTime < limit:
-            # dt is the time delta in seconds (float)
-            currentTime = time.time()
-            elapsed = currentTime - self.lastFrameTime
-            self.lastFrameTime = currentTime
-            
-            # force updates to be constant
-            fixedFrameTime = 1.0/CollisionSystem.FPS
-            sleepTime = fixedFrameTime - elapsed
-            if sleepTime > 0:
-                time.sleep(sleepTime)
-            
-            # update game logic
-            for particle in self.particles:
-                particle.move(fixedFrameTime)  # moves each particle in linear line   
+            # skip event if no longer valid
+            if not evt.isValid():
+                continue
 
-            self.evtTime = self.evtTime + fixedFrameTime
-
-            # process all events that occurred last frame
-            while len(self.pq) > 0 and self.pq[0].time < self.evtTime:
-                # grab top event from priority queue
-                evt = heapq.heappop(self.pq)
-
-                # skip event if no longer valid
-                if not evt.isValid():
-                    continue
-                a = evt.a
-                b = evt.b
-
-                # process collisions 
-                if a is not None and b is not None: 
-                    a.bounceOff(b)
-                    self.predict(a, 10000)
-                    self.predict(b, 10000)
-                elif a is not None and b is None:
-                    a.bounceOffVWall()
-                    self.predict(a, 10000)
-                elif a is None and b is not None:
-                    b.bounceOffHWall()
-                    self.predict(b, 10000)
-                elif a is None and b is None:
-                    pass
-
-            # draw updates to window
-            self.redraw(window)
-
-            # check if user wants to end simulation
-            if window.checkMouse() is not None:
-                return
-
-    # Update position of all particles on window
-    def redraw(self, window):
-        for particle in self.particles:
-            particle.update(window)  
+            # process collisions 
+            a = evt.a
+            b = evt.b
+            if a is not None and b is not None: 
+                a.bounceOff(b)
+                self.predict(a, simTime, 10000)
+                self.predict(b, simTime, 10000)
+            elif a is not None and b is None:
+                a.bounceOffVWall()
+                self.predict(a, simTime, 10000)
+            elif a is None and b is not None:
+                b.bounceOffHWall()
+                self.predict(b, simTime, 10000)
+            elif a is None and b is None:
+                pass
