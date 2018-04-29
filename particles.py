@@ -1,31 +1,57 @@
 '''
 Module: particles.py
-Defines different types of particles
-for use in particle simulation
+Defines particles for use in particle simulation
 '''
 
 import math
 import random
-from graphics import Point, Circle 
+from graphics import Point, Circle, color_rgb
 
-# Defines a Ball object which can be used in the Collision Simulator
-class Ball:
-    def __init__(self, x, y, vx, vy, r, windowWidth, windowHeight):
-        self.x = x                          # position
-        self.y = y                         
-        self.vx = vx                        # velocity  
-        self.vy = vy
-        self.radius = r                     # size of Ball in pixels
-        self.mass = 1                       # used for collision physics
-        self.circle = Circle(Point(x, y), r)
-        self.maxX = windowWidth         	# highest possible x position
-        self.maxY = windowHeight       		# highest possible y position
+# Defines a Particle object which can be used in the Collision Simulator
+class Particle:
+    def __init__(self, window, 
+            radius = None, x = None, y = None, 
+            vx = None, vy = None, m = None,
+            color = None):
+
+        # set default values
+        if (radius == None):
+            radius = 5.0
+        if (x == None):
+            x = random.uniform(0 + radius, window.width - radius)
+        if (y == None):
+            y = random.uniform(0 + radius, window.height - radius)
+        if (vx == None):
+            vx = random.uniform(-100, 100)
+        if (vy == None):
+            vy = random.uniform(-100, 100)
+        if (m == None):
+            m = 1.0
+        if (color == None):
+            red = random.randint(0, 255)
+            green = random.randint(0, 255)
+            blue = random.randint(0, 255)
+            color = color_rgb(red, green, blue)
         
+        # initialize instance properties
+        self.radius = radius            # size
+        self.x = x                      # position
+        self.y = y                        
+        self.vx = vx                    # speed
+        self.vy = vy
+        self.mass = m                   # used for collision physics
+
+        # set window to draw and render
+        self.window = window                
+        self.circle = Circle(Point(self.x, self.y), radius)
+        self.circle.setFill(color)
+        self.circle.setOutline(color)
+
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
                                             # invalidated
  
- 	# equality comparator
+    # equality comparator
     def __eq__(self, other):
         return ((self.x, self.y, self.circle, self.collisionCnt) ==
                 (other.x, other.y, other.circle, other.collisionCnt))
@@ -36,14 +62,14 @@ class Ball:
         self.y = self.y + (self.vy * dt)
 
     # Draws the Circle to a window
-    def draw(self, window):
-        self.circle.draw(window)
+    def draw(self):
+        self.circle.draw(self.window)
     
     # Moves Circle to current position on window 
-    def render(self, window):    
+    def render(self):    
         self.circle.move(self.x - self.circle.getCenter().getX(), self.y - self.circle.getCenter().getY())
 
-    # Calculates time (in ms) until collision with another Ball
+    # Calculates time (in ms) until collision with another Particle
     def timeToHit(self, that):
         if self == that:
             return math.inf 
@@ -74,7 +100,7 @@ class Ball:
     # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self):
         if self.vy > 0:
-            return (self.maxY - self.radius - self.y) / self.vy
+            return (self.window.height - self.radius - self.y) / self.vy
         elif (self.vy < 0):
             return (0.0 + self.radius - self.y) / self.vy
         elif (self.vy == 0):
@@ -83,7 +109,7 @@ class Ball:
     # calculates time (in ms) until collision with vertical wall
     def timeToHitVWall(self):
         if (self.vx > 0):
-            return (self.maxX - self.radius - self.x) / self.vx
+            return (self.window.width - self.radius - self.x) / self.vx
         elif (self.vx < 0):
             return (0.0 + self.radius - self.x) / self.vx
         elif (self.vx == 0):
