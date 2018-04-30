@@ -83,7 +83,6 @@ class Particle:
         dvy = that.vy - self.vy
         
         # collision prediction
-        # d = (Δv*Δr)^2 − (Δv*Δv)(Δr*Δr − σ^2)
         dvdr = dx*dvx + dy*dvy
         if dvdr > 0: 
             return math.inf
@@ -127,7 +126,6 @@ class Particle:
         dist = self.radius + that.radius
 
         # calculate magnitude of force
-        # J = 2 * mass[i] * mass[j] (Δv * Δr) / σ(mass[i] + mass[j])
         J = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
         fx = J * dx / dist
         fy = J * dy / dist
