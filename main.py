@@ -20,7 +20,7 @@ def main():
     n = 50
     for i in range(0, n):
         particles.append(Particle(window))
-    particles.append(Particle(window, radius = 50, color = "blue")) # add one larger ball
+    particles.append(Particle(window, radius = 50, color = "blue", m = 50.0)) # add one larger ball
 
     # draw all particles
     for particle in particles:

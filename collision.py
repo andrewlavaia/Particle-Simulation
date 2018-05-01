@@ -58,8 +58,9 @@ class CollisionSystem:
         # particle into the priority queue
         for b in self.particles:
             dt = a.timeToHit(b)
+            minTime = -1/60.0 # should match FPS
             evt = Event(simTime + dt, a, b)
-            if simTime + dt <= limit:
+            if simTime + dt <= limit and dt > minTime:
                 heapq.heappush(self.pq, evt)
         
         # insert collision time with every wall into 

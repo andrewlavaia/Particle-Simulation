@@ -22,9 +22,9 @@ class Particle:
         if (y == None):
             y = random.uniform(0 + radius, window.height - radius)
         if (vx == None):
-            vx = random.uniform(-100, 100)
+            vx = random.uniform(-200, 200)
         if (vy == None):
-            vy = random.uniform(-100, 100)
+            vy = random.uniform(-200, 200)
         if (m == None):
             m = 1.0
         if (color == None):
@@ -131,8 +131,8 @@ class Particle:
         fy = J * dy / dist
         self.vx = self.vx + (fx / self.mass)
         self.vy = self.vy + (fy / self.mass)
-        that.vx = self.vx - (fx / that.mass)
-        that.vy = self.vy - (fy / that.mass)
+        that.vx = that.vx - (fx / that.mass)
+        that.vy = that.vy - (fy / that.mass)
 
         # increase collision count
         self.collisionCnt = self.collisionCnt + 1
