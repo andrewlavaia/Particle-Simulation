@@ -6,6 +6,10 @@ A particle simulation program that graphically depicts different types of partic
 
 Developed in Python 3.6.5
 
+## Dependencies
+
+PyYAML -> pip install PyYAML
+
 ## License
 
 MIT 

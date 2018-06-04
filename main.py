@@ -4,11 +4,16 @@ Runs a particle simulation that draws
 different types of particles colliding 
 with one another
 '''
-
+import yaml
 import time
 from graphics import GraphWin
 from collision import CollisionSystem 
 from particles import Particle
+
+# load particle options
+with open('config.yaml') as f:
+    # use safe_load instead load
+    dataMap = yaml.safe_load(f)
 
 def main():
     window = GraphWin('Particle Simulation', 800, 600)
@@ -16,11 +21,16 @@ def main():
 
     particles = []
 
-    # Create a list of random balls
-    n = 50
-    for i in range(0, n):
-        particles.append(Particle(window))
-    particles.append(Particle(window, radius = 50, color = "blue", m = 50.0)) # add one larger ball
+    # create particles from config file
+    for key in dataMap['particles']:
+        curr = dataMap['particles'][key]
+        n = int(curr['n'])
+        for i in range(0, n):
+            particles.append(Particle(window, 
+                    radius = float(curr['radius']),
+                    color = curr['color'],
+                    m = float(curr['mass'])
+            ))
 
     # draw all particles
     for particle in particles:
