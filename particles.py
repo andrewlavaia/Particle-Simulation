@@ -5,7 +5,7 @@ Defines particles for use in particle simulation
 
 import math
 import random
-from graphics import Point, Circle, color_rgb
+from graphics import Point, Circle, Rectangle, color_rgb
 
 # Defines a Particle object which can be used in the Collision Simulator
 class Particle:
@@ -43,9 +43,9 @@ class Particle:
 
         # set window to draw and render
         self.window = window                
-        self.circle = Circle(Point(self.x, self.y), radius)
-        self.circle.setFill(color)
-        self.circle.setOutline(color)
+        self.shape = Circle(Point(self.x, self.y), radius)
+        self.shape.setFill(color)
+        self.shape.setOutline(color)
 
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
@@ -53,21 +53,21 @@ class Particle:
  
     # equality comparator
     def __eq__(self, other):
-        return ((self.x, self.y, self.circle, self.collisionCnt) ==
-                (other.x, other.y, other.circle, other.collisionCnt))
+        return ((self.x, self.y, self.shape, self.collisionCnt) ==
+                (other.x, other.y, other.shape, other.collisionCnt))
 
     # Moves ball by time * speed
     def move(self, dt):   
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
 
-    # Draws the Circle to a window
+    # Draws the.shape to a window
     def draw(self):
-        self.circle.draw(self.window)
+        self.shape.draw(self.window)
     
-    # Moves Circle to current position on window 
+    # Moves.shape to current position on window 
     def render(self):    
-        self.circle.move(self.x - self.circle.getCenter().getX(), self.y - self.circle.getCenter().getY())
+        self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
 
     # Calculates time (in ms) until collision with another Particle
     def timeToHit(self, that):
@@ -140,11 +140,86 @@ class Particle:
 
     # adjusts velocity of object after colliding with vertical wall
     def bounceOffVWall(self):
-        self.vx = -1 * self.vx;
+        self.vx = -1 * self.vx
         self.collisionCnt = self.collisionCnt + 1
 
     # adjusts velocity of object after colliding with horizontal wall
     def bounceOffHWall(self):
-        self.vy = -1 * self.vy; 
+        self.vy = -1 * self.vy 
         self.collisionCnt = self.collisionCnt + 1
 
+class Immovable(Particle):
+    def __init__(self, window, 
+        radius = None, x = None, y = None, color = None):
+
+        # set default values
+        if (radius == None):
+            radius = 5.0
+        if (x == None):
+            x = random.uniform(0 + radius, window.width - radius)
+        if (y == None):
+            y = random.uniform(0 + radius, window.height - radius)
+
+        if (color == None):
+            red = random.randint(0, 255)
+            green = random.randint(0, 255)
+            blue = random.randint(0, 255)
+            color = color_rgb(red, green, blue)
+        
+        # initialize instance properties
+        self.radius = radius            # size
+        self.x = x                      # position
+        self.y = y
+
+        # stationary particles shouldn't move                        
+        self.vx = 0.0     
+        self.vy = 0.0                
+        self.mass = 4000000000         
+
+        # set window to draw and render
+        self.window = window                
+        self.shape = Circle(Point(self.x, self.y), radius)
+        self.shape.setFill(color)
+        self.shape.setOutline(color)
+
+        self.collisionCnt = 0               # number of collisions - used to
+                                            # check whether event has become
+                                            # invalidated
+
+class ImmovableRect(Immovable):
+    def __init__(self, window, 
+        radius = None, x = None, y = None, color = None):
+
+        # set default values
+        if (radius == None):
+            radius = 5.0
+        if (x == None):
+            x = random.uniform(0 + radius, window.width - radius)
+        if (y == None):
+            y = random.uniform(0 + radius, window.height - radius)
+
+        if (color == None):
+            red = random.randint(0, 255)
+            green = random.randint(0, 255)
+            blue = random.randint(0, 255)
+            color = color_rgb(red, green, blue)
+        
+        # initialize instance properties
+        self.radius = radius            # size
+        self.x = x                      # position
+        self.y = y
+
+        # stationary particles shouldn't move                        
+        self.vx = 0.0     
+        self.vy = 0.0                
+        self.mass = 4000000000         
+
+        # set window to draw and render
+        self.window = window                
+        self.shape = Rectangle(Point(self.x, self.y), Point(self.x + radius, self.y + radius))
+        self.shape.setFill(color)
+        self.shape.setOutline(color)
+
+        self.collisionCnt = 0               # number of collisions - used to
+                                            # check whether event has become
+                                            # invalidated

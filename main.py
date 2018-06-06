@@ -8,7 +8,7 @@ import yaml
 import time
 from graphics import GraphWin
 from collision import CollisionSystem 
-from particles import Particle
+from particles import Particle, Immovable, ImmovableRect
 
 # load particle options
 with open('config.yaml') as f:
@@ -31,6 +31,9 @@ def main():
                     color = curr['color'],
                     m = float(curr['mass'])
             ))
+
+    particles.append(Immovable(window, radius = 10, x = 50, y = 50, color = 'red'))
+    #particles.append(ImmovableRect(window, radius = 10, x = 50, y = 50, color = 'red'))
 
     # draw all particles
     for particle in particles:
