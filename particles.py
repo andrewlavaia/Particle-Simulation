@@ -152,51 +152,25 @@ class Immovable(Particle):
     def __init__(self, window, 
         radius = None, x = None, y = None, color = None):
 
-        # set default values
-        if (radius == None):
-            radius = 5.0
-        if (x == None):
-            x = random.uniform(0 + radius, window.width - radius)
-        if (y == None):
-            y = random.uniform(0 + radius, window.height - radius)
+        # call base class constructor
+        # initialize vx and vy to 0
+        # initialize mass to 4 billion
+        super().__init__(window, radius, x, y, 0, 0, 4000000000, color)      
 
-        if (color == None):
-            red = random.randint(0, 255)
-            green = random.randint(0, 255)
-            blue = random.randint(0, 255)
-            color = color_rgb(red, green, blue)
-        
-        # initialize instance properties
-        self.radius = radius            # size
-        self.x = x                      # position
-        self.y = y
+    def timeToHitHWall(self):
+        return math.inf
 
-        # stationary particles shouldn't move                        
-        self.vx = 0.0     
-        self.vy = 0.0                
-        self.mass = 4000000000         
+    def timeToHitVWall(self):
+        return math.inf
 
-        # set window to draw and render
-        self.window = window                
-        self.shape = Circle(Point(self.x, self.y), radius)
-        self.shape.setFill(color)
-        self.shape.setOutline(color)
+    def bounceOffVWall(self):
+        pass
 
-        self.collisionCnt = 0               # number of collisions - used to
-                                            # check whether event has become
-                                            # invalidated
+    def bounceOffHWall(self):
+        pass
 
 class ImmovableRect(Immovable):
-    def __init__(self, window, 
-        radius = None, x = None, y = None, color = None):
-
-        # set default values
-        if (radius == None):
-            radius = 5.0
-        if (x == None):
-            x = random.uniform(0 + radius, window.width - radius)
-        if (y == None):
-            y = random.uniform(0 + radius, window.height - radius)
+    def __init__(self, window, x, y, x2, y2, color = None):
 
         if (color == None):
             red = random.randint(0, 255)
@@ -205,9 +179,11 @@ class ImmovableRect(Immovable):
             color = color_rgb(red, green, blue)
         
         # initialize instance properties
-        self.radius = radius            # size
-        self.x = x                      # position
+        self.x = x                      
         self.y = y
+        self.x2 = x2
+        self.y2 = y2
+        self.radius = 1.0     # needed for collision calculations
 
         # stationary particles shouldn't move                        
         self.vx = 0.0     
@@ -216,7 +192,7 @@ class ImmovableRect(Immovable):
 
         # set window to draw and render
         self.window = window                
-        self.shape = Rectangle(Point(self.x, self.y), Point(self.x + radius, self.y + radius))
+        self.shape = Rectangle(Point(self.x, self.y), Point(self.x2, self.y2))
         self.shape.setFill(color)
         self.shape.setOutline(color)
 

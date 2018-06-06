@@ -32,8 +32,9 @@ def main():
                     m = float(curr['mass'])
             ))
 
-    particles.append(Immovable(window, radius = 10, x = 50, y = 50, color = 'red'))
-    #particles.append(ImmovableRect(window, radius = 10, x = 50, y = 50, color = 'red'))
+    # create additional walls
+    for i in range(0, 10):
+        particles.append(Immovable(window, radius = 5, x = 500, y = i*10, color = 'red'))
 
     # draw all particles
     for particle in particles:
