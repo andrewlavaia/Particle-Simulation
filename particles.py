@@ -93,6 +93,9 @@ class Particle:
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
         if d <= 0: 
             return math.inf
+        
+        if dvdv == 0:    
+            return math.inf # both particles are stationary 
 
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
@@ -157,20 +160,8 @@ class Immovable(Particle):
         # initialize mass to 4 billion
         super().__init__(window, radius, x, y, 0, 0, 4000000000, color)      
 
-    def timeToHitHWall(self):
-        return math.inf
-
-    def timeToHitVWall(self):
-        return math.inf
-
-    def bounceOffVWall(self):
-        pass
-
-    def bounceOffHWall(self):
-        pass
-
-class ImmovableRect(Immovable):
-    def __init__(self, window, x, y, x2, y2, color = None):
+class VWall(Immovable):
+    def __init__(self, window, x, x2, y, y2, color = None):
 
         if (color == None):
             red = random.randint(0, 255)
@@ -192,7 +183,7 @@ class ImmovableRect(Immovable):
 
         # set window to draw and render
         self.window = window                
-        self.shape = Rectangle(Point(self.x, self.y), Point(self.x2, self.y2))
+        self.shape = Rectangle(Point(self.x, self.y), Point(self.x + 1, self.y2))
         self.shape.setFill(color)
         self.shape.setOutline(color)
 

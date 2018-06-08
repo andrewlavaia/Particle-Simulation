@@ -8,7 +8,7 @@ import yaml
 import time
 from graphics import GraphWin
 from collision import CollisionSystem 
-from particles import Particle, Immovable, ImmovableRect
+from particles import Particle, Immovable
 
 # load particle options
 with open('config.yaml') as f:
@@ -32,9 +32,12 @@ def main():
                     m = float(curr['mass'])
             ))
 
+
+    #particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
+    
     # create additional walls
-    for i in range(0, 10):
-        particles.append(Immovable(window, radius = 5, x = 500, y = i*10, color = 'red'))
+    # for i in range(0, 50):  
+    #     particles.append(Immovable(window, radius = 5, x = 400, y = i*10, color = 'red'))
 
     # draw all particles
     for particle in particles:
@@ -46,32 +49,30 @@ def main():
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
-    FPS = 120
+
+    TICKS_PER_SECOND = 20 # how often collisions are checked
+    TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
+    lastLogicTick = 0.0
+    nextLogicTick = TIME_PER_TICK
+
     lastFrameTime = time.time()
 
     # Main Simulation Loop
     while simTime < limit:
-        # dt is the time delta in seconds (float)
         currentTime = time.time()
         elapsed = currentTime - lastFrameTime
+        simTime = simTime + elapsed
         lastFrameTime = currentTime
         
-        # force updates to be constant time
-        fixedFrameTime = 1.0/FPS
-        sleepTime = fixedFrameTime - elapsed
-        if sleepTime > 0:
-            time.sleep(sleepTime)
+        while simTime > nextLogicTick:
+            cs.processEvents(lastLogicTick)
 
-        # update time
-        simTime = simTime + fixedFrameTime
+            for particle in particles:
+                particle.move(TIME_PER_TICK)  # moves each particle in linear line  
+            
+            lastLogicTick = nextLogicTick
+            nextLogicTick = nextLogicTick + TIME_PER_TICK
         
-        # update simulation logic
-        for particle in particles:
-            particle.move(fixedFrameTime)  # moves each particle in linear line   
-
-        # process all events that occurred during last frame
-        cs.processEvents(simTime)
-
         # render updates to window
         for particle in particles:
             particle.render()  

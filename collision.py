@@ -58,7 +58,7 @@ class CollisionSystem:
         # particle into the priority queue
         for b in self.particles:
             dt = a.timeToHit(b)
-            minTime = -1/60.0 # should match FPS
+            minTime = -1/20.0 # should match FPS
             evt = Event(simTime + dt, a, b)
             if simTime + dt <= limit and dt > minTime:
                 heapq.heappush(self.pq, evt)
@@ -89,9 +89,10 @@ class CollisionSystem:
             a = evt.a
             b = evt.b
             if a is not None and b is not None: 
-                a.bounceOff(b)
-                self.predict(a, simTime, 10000)
-                self.predict(b, simTime, 10000)
+                pass
+                # a.bounceOff(b)
+                # self.predict(a, simTime, 10000)
+                # self.predict(b, simTime, 10000)
             elif a is not None and b is None:
                 a.bounceOffVWall()
                 self.predict(a, simTime, 10000)
