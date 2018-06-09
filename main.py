@@ -50,9 +50,8 @@ def main():
     simTime = 0.0
     limit = 10000
 
-    TICKS_PER_SECOND = 120 # how often collisions are checked
+    TICKS_PER_SECOND = 30 # how often collisions are checked #!!! error
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
-    lastLogicTick = 0.0
     nextLogicTick = TIME_PER_TICK
 
     lastFrameTime = time.time()
@@ -65,29 +64,25 @@ def main():
 
         simTime = simTime + elapsed
         
-        while simTime > nextLogicTick:
+        if simTime > nextLogicTick:
             cs.processEvents(nextLogicTick)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line  
             
-            nextLogicTick = lastLogicTick + TIME_PER_TICK
-            lastLogicTick = lastLogicTick + TIME_PER_TICK
+            nextLogicTick = nextLogicTick + TIME_PER_TICK
 
-            currentTime = time.time()
-            elapsed = currentTime - lastFrameTime
-            lastFrameTime = lastFrameTime + elapsed
-
-            print(simTime)
+            #print(simTime, nextLogicTick)
         
-        # program will crash if elapsed = 0
-        # time.sleep(0.01)
+        else:
+            # program will crash if elapsed = 0
+            #time.sleep(0.01)
 
-        print(simTime, nextLogicTick, elapsed)
+            #print(simTime, nextLogicTick, elapsed)
 
-        # render updates to window
-        for particle in particles:
-            particle.render()  
+            # render updates to window
+            for particle in particles:
+                particle.render()  
 
         # check if user wants to end simulation
         if window.checkMouse() is not None:

@@ -22,9 +22,9 @@ class Particle:
         if (y == None):
             y = random.uniform(0 + radius, window.height - radius)
         if (vx == None):
-            vx = random.uniform(-200.0, 200.0)
+            vx = random.uniform(-100.0, 100.0)
         if (vy == None):
-            vy = random.uniform(-200.0, 200.0)
+            vy = random.uniform(-100.0, 100.0)
         if (m == None):
             m = 1.0
         if (color == None):
@@ -41,8 +41,9 @@ class Particle:
         self.vy = vy
         self.mass = m                   # used for collision physics
 
-        # set min/max speed
-        self.max_speed = 100.0
+        # set limits on speed and collisions
+        self.max_speed = 100.0 # error
+
 
         # set window to draw and render
         self.window = window                

@@ -25,9 +25,11 @@ class Event:
         else:
             self.countB = -1
     
-    # comparator
+    # comparators
     def __lt__(self, that):
         return self.time <= that.time
+    def __eq__(self, that):
+        return self.time == that.time
 
     # check if event was invalidated from prior collision
     def isValid(self):
@@ -44,6 +46,7 @@ class CollisionSystem:
     def __init__(self, particles):
         self.pq = []                		# priority queue         
         self.particles = particles    		# list of particles as a reference
+        self.lastEvt = Event(0, self.particles[0], self.particles[1])
 
         # initalize pq with initial predictions
         for particle in particles:
@@ -58,9 +61,10 @@ class CollisionSystem:
         # particle into the priority queue
         for b in self.particles:
             dt = a.timeToHit(b)
-            minTime = -1 # only process collisions that would have occurred within last few frames
-            evt = Event(simTime + dt, a, b)
-            if simTime + dt <= limit and dt > minTime:
+            minTime = max(0, simTime + dt)
+            evt = Event(minTime, a, b)
+
+            if simTime + dt <= limit: 
                 heapq.heappush(self.pq, evt)
         
         # insert collision time with every wall into 
@@ -81,6 +85,15 @@ class CollisionSystem:
             # grab top event from priority queue
             evt = heapq.heappop(self.pq)
 
+            # skip event if it is same as last event 
+            # this prevents an infinite loop when two
+            # particles are touching and constantly colliding
+            if evt == self.lastEvt:
+                self.lastEvt = evt
+                continue
+            else:
+                self.lastEvt = evt
+
             # skip event if no longer valid
             if not evt.isValid():
                 continue
@@ -98,5 +111,4 @@ class CollisionSystem:
             elif a is None and b is not None:
                 b.bounceOffHWall()
                 self.predict(b, simTime, 10000)
-            elif a is None and b is None:
-                pass
+            #assert(a is not None and b is not None)
