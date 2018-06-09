@@ -22,9 +22,9 @@ class Particle:
         if (y == None):
             y = random.uniform(0 + radius, window.height - radius)
         if (vx == None):
-            vx = random.uniform(-200, 200)
+            vx = random.uniform(-200.0, 200.0)
         if (vy == None):
-            vy = random.uniform(-200, 200)
+            vy = random.uniform(-200.0, 200.0)
         if (m == None):
             m = 1.0
         if (color == None):
@@ -40,6 +40,9 @@ class Particle:
         self.vx = vx                    # speed
         self.vy = vy
         self.mass = m                   # used for collision physics
+
+        # set min/max speed
+        self.max_speed = 100.0
 
         # set window to draw and render
         self.window = window                
@@ -69,7 +72,7 @@ class Particle:
     def render(self):    
         self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
 
-    # Calculates time (in ms) until collision with another Particle
+    # Calculates time until collision with another Particle
     def timeToHit(self, that):
         if self == that:
             return math.inf 
@@ -136,6 +139,15 @@ class Particle:
         self.vy = self.vy + (fy / self.mass)
         that.vx = that.vx - (fx / that.mass)
         that.vy = that.vy - (fy / that.mass)
+
+        if self.vx > self.max_speed:
+            self.vx = self.max_speed
+        elif self.vx < -1 * self.max_speed:
+            self.vx = -1 * self.max_speed
+        if self.vy > self.max_speed:
+            self.vy = self.max_speed
+        elif self.vy < -1 * self.max_speed:
+            self.vy = -1 * self.max_speed
 
         # increase collision count
         self.collisionCnt = self.collisionCnt + 1

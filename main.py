@@ -50,7 +50,7 @@ def main():
     simTime = 0.0
     limit = 10000
 
-    TICKS_PER_SECOND = 20 # how often collisions are checked
+    TICKS_PER_SECOND = 120 # how often collisions are checked
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     lastLogicTick = 0.0
     nextLogicTick = TIME_PER_TICK
@@ -61,18 +61,30 @@ def main():
     while simTime < limit:
         currentTime = time.time()
         elapsed = currentTime - lastFrameTime
-        simTime = simTime + elapsed
         lastFrameTime = currentTime
+
+        simTime = simTime + elapsed
         
         while simTime > nextLogicTick:
-            cs.processEvents(lastLogicTick)
+            cs.processEvents(nextLogicTick)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line  
             
-            lastLogicTick = nextLogicTick
-            nextLogicTick = nextLogicTick + TIME_PER_TICK
+            nextLogicTick = lastLogicTick + TIME_PER_TICK
+            lastLogicTick = lastLogicTick + TIME_PER_TICK
+
+            currentTime = time.time()
+            elapsed = currentTime - lastFrameTime
+            lastFrameTime = lastFrameTime + elapsed
+
+            print(simTime)
         
+        # program will crash if elapsed = 0
+        # time.sleep(0.01)
+
+        print(simTime, nextLogicTick, elapsed)
+
         # render updates to window
         for particle in particles:
             particle.render()  
