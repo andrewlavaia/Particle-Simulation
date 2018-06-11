@@ -46,13 +46,17 @@ class CollisionSystem:
     def __init__(self, particles):
         self.pq = []                		# priority queue         
         self.particles = particles    		# list of particles as a reference
-        self.lastEvt = Event(0, self.particles[0], self.particles[1])
+        
+        # initialize last event
+        assert(len(particles) >= 2)
+        self.lastEvt = Event(-1.0, self.particles[0], self.particles[1])
 
         # initalize pq with initial predictions
         for particle in particles:
         	self.predict(particle, 0.0, 10000)	
 
-    # Adds all predicted collision times with this particle to priority queue
+    # Inserts all predicted collisions with a given particle as Events 
+    # into priority queue. Event time is the time since simulation began.
     def predict(self, a, simTime, limit):
         if a is None:
             return
@@ -61,7 +65,7 @@ class CollisionSystem:
         # particle into the priority queue
         for b in self.particles:
             dt = a.timeToHit(b)
-            minTime = max(0, simTime + dt)
+            minTime = max(0, simTime + dt) # collision shouldn't occur before simulation starts
             evt = Event(minTime, a, b)
 
             if simTime + dt <= limit: 

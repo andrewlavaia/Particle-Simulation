@@ -36,8 +36,9 @@ def main():
     #particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
     
     # create additional walls
-    # for i in range(0, 50):  
+    # for i in range(0, 25):  
     #     particles.append(Immovable(window, radius = 5, x = 400, y = i*10, color = 'red'))
+    #     particles.append(Immovable(window, radius = 5, x = 400, y = window.height - i*10, color = 'red'))
 
     # draw all particles
     for particle in particles:
@@ -50,7 +51,7 @@ def main():
     simTime = 0.0
     limit = 10000
 
-    TICKS_PER_SECOND = 30 # how often collisions are checked #!!! error
+    TICKS_PER_SECOND = 120 # how often collisions are checked #!!! error
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
 
@@ -68,18 +69,13 @@ def main():
             cs.processEvents(nextLogicTick)
 
             for particle in particles:
-                particle.move(TIME_PER_TICK)  # moves each particle in linear line  
+                particle.move(TIME_PER_TICK)  # moves each particle in linear line
+                #assert(particle.x >= 0 and particle.x <= window.width)  
+                #assert(particle.y >= 0 and particle.y <= window.height)
             
             nextLogicTick = nextLogicTick + TIME_PER_TICK
-
-            #print(simTime, nextLogicTick)
         
         else:
-            # program will crash if elapsed = 0
-            #time.sleep(0.01)
-
-            #print(simTime, nextLogicTick, elapsed)
-
             # render updates to window
             for particle in particles:
                 particle.render()  
