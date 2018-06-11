@@ -1,4 +1,5 @@
 import unittest
+import math
 from graphics import *
 from collision import *
 from particles import *
@@ -25,9 +26,12 @@ class TestIntegration(unittest.TestCase):
 
 class TestParticle(unittest.TestCase):
     def setUp(self):
-        window = GraphWin('Test', 200, 200)
-        self.a = Particle(window, x = 47.5, y = 5.0, vx = 10.0, vy = 0)
-        self.b = Particle(window, x = 50.0, y = 5.0, vx = -10.0, vy = 0)
+        self.window = GraphWin('Test', 200, 200)
+        self.a = Particle(self.window, x = 47.5, y = 5.0, vx = 10.0, vy = 0, radius = 5.0)
+        self.b = Particle(self.window, x = 50.0, y = 5.0, vx = -10.0, vy = 0, radius = 5.0)
+        self.c = Particle(self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
+        self.d = Particle(self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
+        self.e = Particle(self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
 
     def test_bounceOff(self):
         avx = self.a.vx
@@ -38,6 +42,69 @@ class TestParticle(unittest.TestCase):
         self.a.bounceOff(self.b)
         newTotal = self.a.vx + self.a.vy + self.b.vx + self.b.vy
         self.assertTrue(total == newTotal)
+
+    def test_timeToHit(self):
+        dx = 50.0 - 47.5
+        dv = -10.0 - 10
+        drdr = dx * dx
+        dvdv = dv * dv
+        dvdr = dx * dv
+        
+        sigma = 5.0 + 5.0
+        d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
+        t = -1.0 * (dvdr + math.sqrt(d)) / dvdv
+
+        self.assertTrue(self.a.timeToHit(self.b) == -0.375)
+        self.assertTrue(self.a.timeToHit(self.b) == t)
+        self.assertTrue(self.a.timeToHit(self.a) == math.inf)
+        self.assertTrue(self.a.timeToHit(self.c) == math.inf)
+        self.assertTrue(self.a.timeToHit(self.d) == math.inf)
+        self.assertTrue(self.a.timeToHit(self.e) == math.inf)
+
+    def test_timeToHitVWall(self):
+        leftWallX = 0
+        rightWallX = self.window.width
+        self.assertTrue(self.a.timeToHitVWall() == (rightWallX - 5 - 47.5)/10.0)
+        self.assertTrue(self.b.timeToHitVWall() == (leftWallX + 5 - 50.0)/-10.0)
+        self.assertTrue(self.c.timeToHitVWall() == math.inf)
+        self.assertTrue(self.d.timeToHitVWall() == math.inf)
+        self.assertTrue(self.e.timeToHitVWall() == math.inf)
+    
+    def test_timeToHitHWall(self):
+        topWallY = 0
+        botWallY = self.window.height
+        self.assertTrue(self.a.timeToHitHWall() == math.inf)
+        self.assertTrue(self.b.timeToHitHWall() == math.inf)
+        self.assertTrue(self.c.timeToHitHWall() == math.inf)
+        self.assertTrue(self.d.timeToHitHWall() == (botWallY - 5 - 75)/10.0)
+        self.assertTrue(self.e.timeToHitHWall() == (topWallY + 5 - 500)/-10.0)
+
+class TestCollisionSys(unittest.TestCase):
+    def setUp(self):
+        self.window = GraphWin('Test', 200, 200)
+        self.a = Particle(self.window, x = 25.5, y = 5.0, vx = 10.0, vy = 0)
+        self.b = Particle(self.window, x = 50.0, y = 5.0, vx = -10.0, vy = 0)
+        self.c = Particle(self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
+        self.d = Particle(self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
+        self.e = Particle(self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
+        particles = [self.a, self.b, self.c, self.d, self.e]
+        self.cs = CollisionSystem(particles)
+
+    def test_predict(self):
+        # no particle
+        sz = len(self.cs.pq)
+        self.cs.predict(None, 0, 10000)
+        self.assertTrue(sz == len(self.cs.pq))
+
+        # no limit
+        sz = len(self.cs.pq)
+        self.cs.predict(self.a, 0, math.inf)
+        self.assertTrue(len(self.cs.pq) == (sz + 7)) # 2 wall collision + 5 other particles 
+
+        # with limit
+        sz = len(self.cs.pq)
+        self.cs.predict(self.a, 0, 10000)
+        self.assertTrue(len(self.cs.pq) == (sz + 2)) # only two possible collisions (1 wall, 1 particle) 
 
 if __name__ == '__main__':
     unittest.main()

@@ -22,9 +22,9 @@ class Particle:
         if (y == None):
             y = random.uniform(0 + radius, window.height - radius)
         if (vx == None):
-            vx = random.uniform(-200, 200)
+            vx = random.uniform(-200.0, 200.0)
         if (vy == None):
-            vy = random.uniform(-200, 200)
+            vy = random.uniform(-200.0, 200.0)
         if (m == None):
             m = 1.0
         if (color == None):
@@ -40,6 +40,9 @@ class Particle:
         self.vx = vx                    # speed
         self.vy = vy
         self.mass = m                   # used for collision physics
+
+        # set limits on speed and collisions
+        self.max_speed = 1000000.0
 
         # set window to draw and render
         self.window = window                
@@ -69,7 +72,7 @@ class Particle:
     def render(self):    
         self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
 
-    # Calculates time (in ms) until collision with another Particle
+    # Calculates time until collision with another Particle
     def timeToHit(self, that):
         if self == that:
             return math.inf 
@@ -93,6 +96,9 @@ class Particle:
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
         if d <= 0: 
             return math.inf
+        
+        if dvdv == 0:    
+            return math.inf # both particles are stationary 
 
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
@@ -134,6 +140,15 @@ class Particle:
         that.vx = that.vx - (fx / that.mass)
         that.vy = that.vy - (fy / that.mass)
 
+        if self.vx > self.max_speed:
+            self.vx = self.max_speed
+        elif self.vx < -1 * self.max_speed:
+            self.vx = -1 * self.max_speed
+        if self.vy > self.max_speed:
+            self.vy = self.max_speed
+        elif self.vy < -1 * self.max_speed:
+            self.vy = -1 * self.max_speed
+
         # increase collision count
         self.collisionCnt = self.collisionCnt + 1
         that.collisionCnt = that.collisionCnt + 1
@@ -157,20 +172,8 @@ class Immovable(Particle):
         # initialize mass to 4 billion
         super().__init__(window, radius, x, y, 0, 0, 4000000000, color)      
 
-    def timeToHitHWall(self):
-        return math.inf
-
-    def timeToHitVWall(self):
-        return math.inf
-
-    def bounceOffVWall(self):
-        pass
-
-    def bounceOffHWall(self):
-        pass
-
-class ImmovableRect(Immovable):
-    def __init__(self, window, x, y, x2, y2, color = None):
+class VWall(Immovable):
+    def __init__(self, window, x, x2, y, y2, color = None):
 
         if (color == None):
             red = random.randint(0, 255)
@@ -192,7 +195,7 @@ class ImmovableRect(Immovable):
 
         # set window to draw and render
         self.window = window                
-        self.shape = Rectangle(Point(self.x, self.y), Point(self.x2, self.y2))
+        self.shape = Rectangle(Point(self.x, self.y), Point(self.x + 1, self.y2))
         self.shape.setFill(color)
         self.shape.setOutline(color)
 
