@@ -8,7 +8,7 @@ import yaml
 import time
 from graphics import GraphWin
 from collision import CollisionSystem 
-from particles import Particle, Immovable, SquareParticle
+from particles import Particle, Immovable, SquareParticle, Wall
 
 # load particle options
 with open('config.yaml') as f:
@@ -30,17 +30,15 @@ def main():
                     radius = float(curr['radius']),
                     color = curr['color'],
                     m = float(curr['mass'])
-                    # shape = "Square"
             ))
 
     particles.append(SquareParticle(window, color = 'green'))
-
-    particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
+    # particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
     
-    # create additional walls
-    # for i in range(0, 25):  
-    #     particles.append(Immovable(window, radius = 5, x = 400, y = i*10, color = 'red'))
-    #     particles.append(Immovable(window, radius = 5, x = 400, y = window.height - i*10, color = 'red'))
+    # create walls
+    for i in range(0, 30):  
+        particles.append(Wall(window, x = 400, y = i*4, color = 'red'))
+        particles.append(Wall(window, x = 400, y = window.height - i*4, color = 'red'))
 
     # draw all particles
     for particle in particles:

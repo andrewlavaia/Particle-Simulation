@@ -69,7 +69,7 @@ class Particle:
         return ((self.x, self.y, self.shape, self.collisionCnt) ==
                 (other.x, other.y, other.shape, other.collisionCnt))
 
-    # Moves ball by time * speed
+    # Moves particle by time * speed
     def move(self, dt):   
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
@@ -160,6 +160,23 @@ class Particle:
         elif (self.vx == 0):
             return math.inf
 
+    #  adjusts velocity vector given a force from collision
+    def moveByForce(self, that, fx, fy):
+        self.vx = self.vx + (fx / self.mass)
+        self.vy = self.vy + (fy / self.mass)
+
+        # limit speed to max speed
+        # if self.vx > self.max_speed:
+        #     self.vx = self.max_speed
+        # elif self.vx < -1 * self.max_speed:
+        #     self.vx = -1 * self.max_speed
+        # if self.vy > self.max_speed:
+        #     self.vy = self.max_speed
+        # elif self.vy < -1 * self.max_speed:
+        #     self.vy = -1 * self.max_speed
+
+        self.collisionCnt = self.collisionCnt + 1
+
     # adjusts velocity vectors of two objects after a collision
     def bounceOff(self, that):
         dx = that.x - self.x
@@ -170,33 +187,20 @@ class Particle:
         # dot product
         dvdr = dx*dvx + dy*dvy
 
-        # calculate distance between centers (formerly self.radius + that.radius)
+        # calculate distance between centers
         # pythagorean
+        # dist = self.radius + that.radius
         side1 = (self.x - that.x)*(self.x - that.x)
         side2 = (self.y - that.y)*(self.y - that.y)
         dist = math.sqrt(side1 + side2) 
-
+        
         # calculate magnitude of force
         J = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
         fx = J * dx / dist
         fy = J * dy / dist
-        self.vx = self.vx + (fx / self.mass)
-        self.vy = self.vy + (fy / self.mass)
-        that.vx = that.vx - (fx / that.mass)
-        that.vy = that.vy - (fy / that.mass)
 
-        if self.vx > self.max_speed:
-            self.vx = self.max_speed
-        elif self.vx < -1 * self.max_speed:
-            self.vx = -1 * self.max_speed
-        if self.vy > self.max_speed:
-            self.vy = self.max_speed
-        elif self.vy < -1 * self.max_speed:
-            self.vy = -1 * self.max_speed
-
-        # increase collision count
-        self.collisionCnt = self.collisionCnt + 1
-        that.collisionCnt = that.collisionCnt + 1
+        self.moveByForce(that, fx, fy)
+        that.moveByForce(self, -fx, -fy)
 
     # adjusts velocity of object after colliding with vertical wall
     def bounceOffVWall(self):
@@ -208,17 +212,68 @@ class Particle:
         self.vy = -1 * self.vy 
         self.collisionCnt = self.collisionCnt + 1
 
+
+# !!! Find out why speed is dying upon hitting an immovable or wall
+
 class Immovable(Particle):
     def __init__(self, window, 
         radius = None, x = None, y = None, color = None):
 
         # call base class constructor
-        # initialize vx and vy to 0
-        # initialize mass to 4 billion
-        super().__init__(window, radius, x, y, 0, 0, 4000000000, color)      
+        super().__init__(window, radius, x, y, 0.0, 0.0, 1.0, color)
+
+    # let other particles calculate time to hit
+    def timeToHit(self, that):
+        return math.inf
+    def timeToHitVWall(self):
+        return math.inf 
+    def timeToHitHWall(self):
+        return math.inf 
+
+    # double force for that object
+    # needed, otherwise collisions with walls lose energy
+    def moveByForce(self, that, fx, fy):
+        that.vx = that.vx - (fx / self.mass)
+        that.vy = that.vy - (fy / self.mass)
+        self.collisionCnt = self.collisionCnt + 1
+
+    def bounceOff(self, that):
+        pass
+    def bounceOffVWall(self):
+        pass
+    def bounceOffHWall(self):
+        pass
 
 class SquareParticle(Particle):
     def __init__(self, window, radius = None, 
         x = None, y = None, vx = None, vy = None, mass = None, color = None):
 
         super().__init__(window, radius, x, y, vx, vy, mass, color, shape = "Square")  
+
+class Wall(Particle):
+    def __init__(self, window, 
+        radius = None, x = None, y = None, color = None):
+
+        super().__init__(window, 1.0, x, y, 0.0, 0.0, 1.0, color, shape = "Square") 
+        
+    # let other particles calculate time to hit
+    def timeToHit(self, that):
+        return math.inf
+    def timeToHitVWall(self):
+        return math.inf 
+    def timeToHitHWall(self):
+        return math.inf 
+
+    # double force for that object
+    # needed, otherwise collisions with walls lose energy
+    def moveByForce(self, that, fx, fy):
+        that.vx = that.vx - (fx / self.mass)
+        that.vy = that.vy - (fy / self.mass)
+        self.collisionCnt = self.collisionCnt + 1
+
+    def bounceOff(self, that):
+        pass
+    def bounceOffVWall(self):
+        pass
+    def bounceOffHWall(self):
+        pass
