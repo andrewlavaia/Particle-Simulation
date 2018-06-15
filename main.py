@@ -8,7 +8,7 @@ import yaml
 import time
 from graphics import GraphWin
 from collision import CollisionSystem 
-from particles import Particle, Immovable, SquareParticle, Wall
+from particles import Particle, Immovable, RectParticle, Wall
 
 # load particle options
 with open('config.yaml') as f:
@@ -29,8 +29,10 @@ def main():
             particles.append(Particle(window, 
                     radius = float(curr['radius']),
                     color = curr['color'],
-                    m = float(curr['mass']),
-                    shape = curr['shape']
+                    mass = float(curr['mass']),
+                    shape = curr['shape'],
+                    width = float(curr['width']),
+                    height = float(curr['height'])
             ))
 
     # particles.append(SquareParticle(window, color = 'green'))
@@ -52,7 +54,7 @@ def main():
     simTime = 0.0
     limit = 10000
 
-    TICKS_PER_SECOND = 120 # how often collisions are checked #!!! error
+    TICKS_PER_SECOND = 120 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
 

@@ -1,13 +1,17 @@
 particles:
   group1:
-      n: 40
-      color: black
-      radius: 5.0
-      mass: 1.0
-      shape: "Circle"
+        n: 40
+        color: black
+        radius: 5.0
+        mass: 1.0
+        shape: "Rect"
+        width: 10.0
+        height: 10.0
   group2:
-      n: 1
-      color: blue
-      radius: 50.0
-      mass: 50.0
-      shape: "Circle"
+        n: 1
+        color: blue
+        radius: 50.0
+        mass: 50.0
+        shape: "Circle"
+        width: 10.0
+        height: 10.0

@@ -32,7 +32,7 @@ class TestParticle(unittest.TestCase):
         self.c = Particle(self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
         self.d = Particle(self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
         self.e = Particle(self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
-        self.f = Particle(self.window, radius = 10.0, shape = "Square")
+        self.f = Particle(self.window, width = 20.0, height = 20.0, shape = "Rect")
 
     def test_bounceOff(self):
         avx = self.a.vx
