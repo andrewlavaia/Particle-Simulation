@@ -1,11 +1,13 @@
 particles:
   group1:
-      n: 50
+      n: 40
       color: black
       radius: 5.0
       mass: 1.0
+      shape: "Circle"
   group2:
       n: 1
       color: blue
       radius: 50.0
       mass: 50.0
+      shape: "Circle"

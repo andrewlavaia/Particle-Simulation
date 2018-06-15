@@ -29,16 +29,17 @@ def main():
             particles.append(Particle(window, 
                     radius = float(curr['radius']),
                     color = curr['color'],
-                    m = float(curr['mass'])
+                    m = float(curr['mass']),
+                    shape = curr['shape']
             ))
 
-    particles.append(SquareParticle(window, color = 'green'))
+    # particles.append(SquareParticle(window, color = 'green'))
     # particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
     
-    # create walls
-    for i in range(0, 30):  
-        particles.append(Wall(window, x = 400, y = i*4, color = 'red'))
-        particles.append(Wall(window, x = 400, y = window.height - i*4, color = 'red'))
+    # # create walls
+    # for i in range(0, 30):  
+    #     particles.append(Wall(window, x = 400, y = i*4, color = 'red'))
+    #     particles.append(Wall(window, x = 400, y = window.height - i*4, color = 'red'))
 
     # draw all particles
     for particle in particles:

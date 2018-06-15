@@ -32,20 +32,19 @@ class Particle:
             green = random.randint(0, 255)
             blue = random.randint(0, 255)
             color = color_rgb(red, green, blue)
-        
-        # initialize instance properties
-        
+                
         self.x = x                      # position
         self.y = y                        
         self.vx = vx                    # speed
         self.vy = vy
         self.mass = m                   # used for collision physics
         self.radius = radius
-        self.half_width = radius        # distance from edge to center
-        self.half_height = radius
+        self.width = radius * 2.0        #!!! this only works for squares....
+        self.height = radius * 2.0
+        self.shape_type = shape
 
         # set limits on speed and collisions
-        self.max_speed = 1000000.0
+        # self.max_speed = 1000000.0
 
         # set window to draw and render
         self.window = window
@@ -131,7 +130,10 @@ class Particle:
         #     degrees = 90 - degrees
         # print(radians, degrees)
         
-        sigma = self.radius + that.radius
+        #sigma = self.radius + that.radius
+        center_dist1 = self.distFromCenter(self.calcAngle(self.height/2.0, self.width/2.0))
+        center_dist2 = that.distFromCenter(that.calcAngle(that.height/2.0, that.width/2.0)) 
+        sigma = center_dist1 + center_dist2
         
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
         if d <= 0: 
@@ -142,21 +144,79 @@ class Particle:
 
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
+    def distFromCenter(self, deg):
+        if self.shape_type == "Circle":
+            return self.radius
+        
+        twoPI = math.pi * 2
+        theta = deg * math.pi / 180
+  
+        while theta < -math.pi:
+            theta += twoPI
+  
+        while theta > math.pi:
+            theta -= twoPI
+            
+        rectAtan = math.atan2(self.height, self.width)
+        tanTheta = math.tan(theta)
+
+        region = 0  
+        if (theta > -rectAtan) and (theta <= rectAtan):
+            region = 1
+        elif (theta > rectAtan) and (theta <= (math.pi - rectAtan)):
+            region = 2
+        elif (theta > (math.pi - rectAtan)) or (theta <= -(math.pi - rectAtan)):
+            region = 3
+        else:
+            region = 4
+        
+  
+        edgePoint = Point(self.width/2.0, self.height/2.0)
+        xFactor = 1
+        yFactor = 1
+        
+        if region == 1 or region == 2:
+            yFactor = -1
+        elif region == 3 or region == 4:
+            xFactor = -1
+        
+        # print (region, xFactor, yFactor)
+
+        if region == 1 or region == 3:
+            edgePoint.x = edgePoint.x + (xFactor * (self.width / 2.0))               # "Z0"
+            edgePoint.y = edgePoint.y + (yFactor * (self.width / 2.0) * tanTheta)
+        else:
+            edgePoint.x = edgePoint.x + (xFactor * (self.height / (2.0 * tanTheta)))  # "Z1"
+            edgePoint.y = edgePoint.y + (yFactor * (self.height /  2.0))
+        
+        return self.pythagorean(edgePoint.x - (self.width/2.0), 
+                                edgePoint.y - (self.height/2.0))
+
+    def calcAngle(self, dy, dx):
+        radians = math.atan2(dy, dx) # between -pi and pi
+        degrees = radians * 180/math.pi
+        if degrees > 90:
+            degrees = 450 - degrees
+        else:
+            degrees = 90 - degrees
+        # print(radians, degrees)
+        return degrees
+
     # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self):
         if self.vy > 0:
-            return (self.window.height - self.half_height - self.y) / self.vy
+            return (self.window.height - self.height/2 - self.y) / self.vy
         elif (self.vy < 0):
-            return (0.0 + self.half_height - self.y) / self.vy
+            return (0.0 + self.height/2 - self.y) / self.vy
         elif (self.vy == 0):
             return math.inf
 
     # calculates time (in ms) until collision with vertical wall
     def timeToHitVWall(self):
         if (self.vx > 0):
-            return (self.window.width - self.half_width - self.x) / self.vx
+            return (self.window.width - self.width/2 - self.x) / self.vx
         elif (self.vx < 0):
-            return (0.0 + self.half_width - self.x) / self.vx
+            return (0.0 + self.width/2 - self.x) / self.vx
         elif (self.vx == 0):
             return math.inf
 
@@ -177,6 +237,9 @@ class Particle:
 
         self.collisionCnt = self.collisionCnt + 1
 
+    def pythagorean(self, side1, side2):
+        return math.sqrt((side1 * side1) + (side2 * side2)) 
+
     # adjusts velocity vectors of two objects after a collision
     def bounceOff(self, that):
         dx = that.x - self.x
@@ -190,9 +253,7 @@ class Particle:
         # calculate distance between centers
         # pythagorean
         # dist = self.radius + that.radius
-        side1 = (self.x - that.x)*(self.x - that.x)
-        side2 = (self.y - that.y)*(self.y - that.y)
-        dist = math.sqrt(side1 + side2) 
+        dist = self.pythagorean(dx, dy)
         
         # calculate magnitude of force
         J = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
@@ -212,9 +273,6 @@ class Particle:
         self.vy = -1 * self.vy 
         self.collisionCnt = self.collisionCnt + 1
 
-
-# !!! Find out why speed is dying upon hitting an immovable or wall
-
 class Immovable(Particle):
     def __init__(self, window, 
         radius = None, x = None, y = None, color = None):
@@ -230,8 +288,8 @@ class Immovable(Particle):
     def timeToHitHWall(self):
         return math.inf 
 
-    # double force for that object
-    # needed, otherwise collisions with walls lose energy
+    # double force for "that" particle
+    # needed otherwise collisions with this particle lose energy
     def moveByForce(self, that, fx, fy):
         that.vx = that.vx - (fx / self.mass)
         that.vy = that.vy - (fy / self.mass)
@@ -264,8 +322,8 @@ class Wall(Particle):
     def timeToHitHWall(self):
         return math.inf 
 
-    # double force for that object
-    # needed, otherwise collisions with walls lose energy
+    # double force for "that" particle
+    # needed otherwise collisions with this particle lose energy
     def moveByForce(self, that, fx, fy):
         that.vx = that.vx - (fx / self.mass)
         that.vy = that.vy - (fy / self.mass)

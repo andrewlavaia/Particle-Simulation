@@ -32,6 +32,7 @@ class TestParticle(unittest.TestCase):
         self.c = Particle(self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
         self.d = Particle(self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
         self.e = Particle(self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
+        self.f = Particle(self.window, radius = 10.0, shape = "Square")
 
     def test_bounceOff(self):
         avx = self.a.vx
@@ -78,6 +79,32 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(self.c.timeToHitHWall() == math.inf)
         self.assertTrue(self.d.timeToHitHWall() == (botWallY - 5 - 75)/10.0)
         self.assertTrue(self.e.timeToHitHWall() == (topWallY + 5 - 500)/-10.0)
+
+    def test_distFromCenter(self):
+        self.assertTrue(self.a.distFromCenter(0) == 5.0)
+        self.assertTrue(self.a.distFromCenter(45) == 5.0)
+        self.assertTrue(round(self.f.distFromCenter(0), 2) == 10.0) # right
+        self.assertTrue(round(self.f.distFromCenter(90), 2) == 10.0) # top
+        self.assertTrue(round(self.f.distFromCenter(180), 2) == 10.0) # left
+        self.assertTrue(round(self.f.distFromCenter(270), 2) == 10.0) # bottom
+        self.assertTrue(round(self.f.distFromCenter(360), 2) == 10.0) # bottom
+        self.assertTrue(round(self.f.distFromCenter(45), 6) == 14.142136)
+        self.assertTrue(round(self.f.distFromCenter(225), 6) == 14.142136)
+        self.assertTrue(round(self.f.distFromCenter(-45), 6) == 14.142136)
+
+    def test_calcAngle(self):
+        self.assertTrue(self.a.calcAngle(0, 0) == 90) # default
+        self.assertTrue(self.a.calcAngle(10, 0) == 0) # top
+        self.assertTrue(self.a.calcAngle(0, 10) == 90) # right
+        self.assertTrue(self.a.calcAngle(0, -10) == 270) # left 
+        self.assertTrue(self.a.calcAngle(-10, 0) == 180) # bot
+        self.assertTrue(self.a.calcAngle(0, 100) == 90) # dist doesn't matter if horizontal 
+        self.assertTrue(self.a.calcAngle(100, 0) == 0) # dist doesn't matter if vertical 
+        self.assertTrue(self.a.calcAngle(10, 10) == 45) # top right 
+        self.assertTrue(self.a.calcAngle(10, -10) == 315) # top left 
+        self.assertTrue(self.a.calcAngle(-10, -10) == 225) # bot left 
+        self.assertTrue(self.a.calcAngle(-10, 10) == 135) # bot right 
+        self.assertTrue(self.a.calcAngle(10, 10) + 180 == self.a.calcAngle(-10, -10))
 
 class TestCollisionSys(unittest.TestCase):
     def setUp(self):
