@@ -73,8 +73,8 @@ def main():
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
-                #assert(particle.x >= 0 and particle.x <= window.width)  
-                #assert(particle.y >= 0 and particle.y <= window.height)
+                assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
+                assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
             nextLogicTick = nextLogicTick + TIME_PER_TICK
         

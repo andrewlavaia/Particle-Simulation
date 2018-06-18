@@ -99,7 +99,6 @@ class Particle:
             degrees = 450 - degrees
         else:
             degrees = 90 - degrees
-        # print(radians, degrees)
         return degrees
 
     def distFromCenter(self, deg):
@@ -145,15 +144,22 @@ class Particle:
             edgePoint.y = edgePoint.y + (yFactor * (self.height /  2.0))
         
         return self.pythagorean(edgePoint.x - (self.width/2.0), 
-                                edgePoint.y - (self.height/2.0))
+                                edgePoint.y - (self.height/2.0)) 
 
     # Calculates time until collision with another Particle
+    
+    # Need a new collision detection algorithm for rectangles...
+    #  This algo is not computing correctly for long rectangles
+    #  because it is computing the angle from the center
+    #  and not the edge (ie particle traveling straight up 
+    #  won't hit left or right edges of long rectangle because
+    #  the angle calc tells it to use the vertical distance) 
     def timeToHit(self, that):
         if self == that:
             return math.inf 
 
         # distance
-        dx = that.x - self.x
+        dx = that.x - self.x # switch to distance between nearest points?
         dy = that.y - self.y
         
         # speed
@@ -167,8 +173,8 @@ class Particle:
         dvdv = dvx*dvx + dvy*dvy
         drdr = dx*dx + dy*dy
         
-        dist_from_center1 = self.distFromCenter(self.calcAngle(self.height/2.0, self.width/2.0))
-        dist_from_center2 = that.distFromCenter(that.calcAngle(that.height/2.0, that.width/2.0)) 
+        dist_from_center1 = self.distFromCenter(self.calcAngle(dx, dy))
+        dist_from_center2 = that.distFromCenter(that.calcAngle(-dx, -dy)) 
         sigma = dist_from_center1 + dist_from_center2
         
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
