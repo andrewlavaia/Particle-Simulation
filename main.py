@@ -8,7 +8,7 @@ import yaml
 import time
 from graphics import GraphWin
 from collision import CollisionSystem 
-from particles import Particle, Immovable
+from particles import Particle, Immovable, RectParticle, Wall
 
 # load particle options
 with open('config.yaml') as f:
@@ -29,16 +29,19 @@ def main():
             particles.append(Particle(window, 
                     radius = float(curr['radius']),
                     color = curr['color'],
-                    m = float(curr['mass'])
+                    mass = float(curr['mass']),
+                    shape = curr['shape'],
+                    width = float(curr['width']),
+                    height = float(curr['height'])
             ))
 
-
-    #particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
+    # particles.append(SquareParticle(window, color = 'green'))
+    # particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
     
-    # create additional walls
-    # for i in range(0, 25):  
-    #     particles.append(Immovable(window, radius = 5, x = 400, y = i*10, color = 'red'))
-    #     particles.append(Immovable(window, radius = 5, x = 400, y = window.height - i*10, color = 'red'))
+    # # create walls
+    # for i in range(0, 30):  
+    #     particles.append(Wall(window, x = 400, y = i*4, color = 'red'))
+    #     particles.append(Wall(window, x = 400, y = window.height - i*4, color = 'red'))
 
     # draw all particles
     for particle in particles:
@@ -51,7 +54,7 @@ def main():
     simTime = 0.0
     limit = 10000
 
-    TICKS_PER_SECOND = 120 # how often collisions are checked #!!! error
+    TICKS_PER_SECOND = 120 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
 
@@ -70,8 +73,8 @@ def main():
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
-                #assert(particle.x >= 0 and particle.x <= window.width)  
-                #assert(particle.y >= 0 and particle.y <= window.height)
+                assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
+                assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
             nextLogicTick = nextLogicTick + TIME_PER_TICK
         

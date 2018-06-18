@@ -61,11 +61,12 @@ class CollisionSystem:
         if a is None:
             return
         
-        # insert predicted collision time with every other 
-        # particle into the priority queue
+        # insert predicted collision with every other 
+        # particle as an event into the priority queue 
+        # if collision time is between simTime and limit
         for b in self.particles:
             dt = a.timeToHit(b)
-            minTime = max(0, simTime + dt) # collision shouldn't occur before simulation starts
+            minTime = max(simTime - 1.0, simTime + dt) # collision shouldn't occur before current simTime
             evt = Event(minTime, a, b)
 
             if simTime + dt <= limit: 
@@ -89,6 +90,10 @@ class CollisionSystem:
             # grab top event from priority queue
             evt = heapq.heappop(self.pq)
 
+            # skip event if no longer valid
+            if not evt.isValid():
+                continue
+
             # skip event if it is same as last event 
             # this prevents an infinite loop when two
             # particles are touching and constantly colliding
@@ -97,10 +102,6 @@ class CollisionSystem:
                 continue
             else:
                 self.lastEvt = evt
-
-            # skip event if no longer valid
-            if not evt.isValid():
-                continue
 
             # process collisions 
             a = evt.a
