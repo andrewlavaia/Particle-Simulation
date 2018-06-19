@@ -102,6 +102,7 @@ import time, os, sys
 
 try:  # import as appropriate for 2.x vs. 3.x
    import tkinter as tk
+   from tkinter import Menu
 except:
    import Tkinter as tk
 
@@ -170,6 +171,14 @@ class GraphWin(tk.Canvas):
         master.lift()
         self.lastKey = ""
         if autoflush: _root.update()
+
+        menubar = Menu(self.master)
+        self.master.config(menu=menubar)
+        filemenu = Menu(menubar, tearoff=0)
+        filemenu.add_command(label="New", command=print('hello'))
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self.close)
+        menubar.add_cascade(label="File", menu=filemenu)
 
     def __repr__(self):
         if self.isClosed():
