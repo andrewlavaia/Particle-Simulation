@@ -15,9 +15,17 @@ with open('config.yaml') as f:
     # use safe_load instead load
     dataMap = yaml.safe_load(f)
 
+window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
+
 def main():
-    window = GraphWin('Particle Simulation', 800, 600)
+    menu_options = { "New": main, "Exit": window.close}
+    window.addMenu(menu_options)
     window.setBackground('white')
+
+    # clear window of any previously drawn items
+    for item in window.items[:]:
+        item.undraw()
+    window.update
 
     particles = []
 
@@ -60,6 +68,10 @@ def main():
 
     lastFrameTime = time.time()
 
+    def pause():
+        while window.checkKey() != "space": # pause until user hits space again
+            pass
+
     # Main Simulation Loop
     while simTime < limit:
         currentTime = time.time()
@@ -85,8 +97,11 @@ def main():
 
         # check if user wants to end simulation
         if window.checkMouse() is not None:
-            break
-  
+            window.close()
+
+        if window.checkKey() == "space":
+            pause()
+            lastFrameTime = time.time()
     window.close
 
 main()
