@@ -810,7 +810,7 @@ class Entry(GraphicsObject):
         self.width = width
         self.text = tk.StringVar(_root)
         self.text.set("")
-        self.fill = "gray"
+        self.fill = "white"
         self.color = "black"
         self.font = DEFAULT_CONFIG['font']
         self.entry = None

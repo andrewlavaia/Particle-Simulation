@@ -6,25 +6,50 @@ with one another
 '''
 import yaml
 import time
-from graphics import GraphWin, Text, Point, Button
+from graphics import GraphWin, Text, Point, Button, Entry
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall
 
-# load particle options
-with open('config.yaml') as f:
-    # use safe_load instead load
-    dataMap = yaml.safe_load(f)
-
 window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
+dataMap = {}
+config_flag = 0
 
-# TODO
-# start with a new main menu screen that allows the user to 
-# specify the parameters (how many balls, etc) for a random
-# simulation or pick specific pre-defined scenarios
+def load_config(file_string):
+    # load particle options
+    with open(file_string) as f:
+        # use safe_load instead load
+        dataMap = yaml.safe_load(f)
+    return dataMap
 
-# how to implement? Pop-up menu, or just initial screen is 
-# blank with buttons and then those are undrawn when simulation 
-# starts?
+def set_config(input_1):
+    data = dict(
+        particles = dict(
+            group1 = dict(
+                n = 10,
+                color = 'black',
+                radius = 5.0,
+                mass = 1.0,
+                shape = "Circle",
+                width = 10.0,
+                height = 10.0 
+            ),
+            group2 = dict(                
+                n = 1,
+                color = 'green',
+                radius = 50.0,
+                mass = 20.0,
+                shape = "Circle",
+                width = 10.0,
+                height = 10.0
+            )
+        )
+    )
+
+    with open('config.yml', 'w') as outfile:
+        yaml.safe_dump(data, outfile, default_flow_style=False)
+    
+    global config_flag 
+    config_flag = 1
 
 def main_menu():
     window.clear()
@@ -33,7 +58,12 @@ def main_menu():
             '# of particles: ')
     txt_1_particles.setSize(24)
     txt_1_particles.draw(window)
-    btn = Button(window, Point(window.width/2.0 - 100.0, window.height/2.0 + 100.0), 
+    input_1_particles = Entry(Point(window.width/2.0 + 200.0, window.height/2.0 - 50.0), 4)
+    input_1_particles.setSize(24)
+    input_1_particles.setText(40)
+    input_1_particles.draw(window)
+
+    btn = Button(window, Point(window.width/2.0, window.height/2.0 + 100.0), 
             200, 100, 'Run Simulation')
     btn.activate()
 
@@ -41,11 +71,17 @@ def main_menu():
         last_clicked_pt = window.getMouse()
         if last_clicked_pt is not None:
             if btn.clicked(last_clicked_pt):
-                print('in button')
+                set_config('x')
+                main()
             else:
                 print('not in button')
 
 def main():
+    if not config_flag:
+        dataMap = load_config('config_default.yml')
+    else:
+        dataMap = load_config('config.yml')
+
     menu_options = {"New": main_menu, "Restart": main, "Exit": window.close}
     window.addMenu(menu_options)
     window.setBackground('white')
