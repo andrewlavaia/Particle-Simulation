@@ -6,7 +6,7 @@ with one another
 '''
 import yaml
 import time
-from graphics import GraphWin
+from graphics import GraphWin, Text, Point, Button
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall
 
@@ -17,15 +17,39 @@ with open('config.yaml') as f:
 
 window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
 
+# TODO
+# start with a new main menu screen that allows the user to 
+# specify the parameters (how many balls, etc) for a random
+# simulation or pick specific pre-defined scenarios
+
+# how to implement? Pop-up menu, or just initial screen is 
+# blank with buttons and then those are undrawn when simulation 
+# starts?
+
+def main_menu():
+    window.clear()
+    window.setBackground('white')
+    txt_1_particles = Text(Point(window.width/2.0 - 200.0, window.height/2.0 - 50.0), 
+            '# of particles: ')
+    txt_1_particles.setSize(24)
+    txt_1_particles.draw(window)
+    btn = Button(window, Point(window.width/2.0 - 100.0, window.height/2.0 + 100.0), 
+            200, 100, 'Run Simulation')
+    btn.activate()
+
+    while True:
+        last_clicked_pt = window.getMouse()
+        if last_clicked_pt is not None:
+            if btn.clicked(last_clicked_pt):
+                print('in button')
+            else:
+                print('not in button')
+
 def main():
-    menu_options = { "New": main, "Exit": window.close}
+    menu_options = {"New": main_menu, "Restart": main, "Exit": window.close}
     window.addMenu(menu_options)
     window.setBackground('white')
-
-    # clear window of any previously drawn items
-    for item in window.items[:]:
-        item.undraw()
-    window.update
+    window.clear()
 
     particles = []
 
@@ -69,8 +93,12 @@ def main():
     lastFrameTime = time.time()
 
     def pause():
+        message = Text(Point(window.width/2.0, window.height/2.0 - 50.0), 'Paused')
+        message.setSize(24)
+        message.draw(window)
         while window.checkKey() != "space": # pause until user hits space again
             pass
+        message.undraw()
 
     # Main Simulation Loop
     while simTime < limit:
@@ -97,7 +125,8 @@ def main():
 
         # check if user wants to end simulation
         if window.checkMouse() is not None:
-            window.close()
+            pass
+            # window.close()
 
         if window.checkKey() == "space":
             pause()

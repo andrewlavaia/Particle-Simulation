@@ -188,8 +188,9 @@ class Particle:
 
     # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self):
+        menu_height = 20.0
         if self.vy > 0:
-            return (self.window.height - self.height/2 - self.y) / self.vy
+            return (self.window.height - self.height/2 - self.y - menu_height) / self.vy 
         elif (self.vy < 0):
             return (0.0 + self.height/2 - self.y) / self.vy
         elif (self.vy == 0):
