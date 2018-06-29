@@ -6,9 +6,10 @@ with one another
 '''
 import yaml
 import time
-from graphics import GraphWin, Text, Point, Button, Entry
+from graphics import GraphWin, Text, Point, Entry
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall
+from ui import *
 
 window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
 dataMap = {}
@@ -33,6 +34,16 @@ def create_particle_data(**kwargs):
 def main_menu():
     window.clear()
     window.setBackground('white')
+    
+    p = Point(100, 100)
+    p2 = Point(100, 150)
+    p3 = Point(100, 200)
+    ib = InputBox(p, 'color', 'color: ')
+    ib2 = InputBox(p2, 'unsigned_int', 'hello', 20)
+    ib3 = InputBox(p3, 'unsigned_int', 'check this out', 40)
+    ib.draw(window)
+    ib2.draw(window)
+    ib3.draw(window)
 
     # TODO 
     # move all labels and input boxes into their own class that can
@@ -87,10 +98,11 @@ def main_menu():
         last_clicked_pt = window.getMouse()
         if last_clicked_pt is not None:
             if btn.clicked(last_clicked_pt):
+                ib.validateInput()
                 kwargs = {
                     'group1': {
                         'n': g1_n.getText(),
-                        'color': g1_color.getText(),
+                        'color': ib.getInput(),
                         'radius': g1_r.getText(),
                         'mass': g1_m.getText(),
                         'shape': 'Circle',

@@ -1,6 +1,6 @@
 particles:
   group1:
-    color: black
+    color: check
     height: 10.0
     mass: '1.0'
     n: '40'
