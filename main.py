@@ -6,14 +6,14 @@ with one another
 '''
 import yaml
 import time
-from graphics import GraphWin, Text, Point, Entry
+from graphics import GraphWin, Text, Point, Entry, Line
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall
 from ui import *
 
 window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
 dataMap = {}
-config_flag = 0
+config_flag = 1
 
 def load_config(file_string):
     with open(file_string) as f:
@@ -24,7 +24,7 @@ def set_config(data):
     with open('config.yml', 'w') as outfile:
         yaml.safe_dump(data, outfile, default_flow_style=False)
     global config_flag 
-    config_flag = 1
+    config_flag = 0
 
 def create_particle_data(**kwargs):
     data = {'particles': { } }
@@ -35,103 +35,96 @@ def main_menu():
     window.clear()
     window.setBackground('white')
     
-    p = Point(100, 100)
-    p2 = Point(100, 150)
-    p3 = Point(100, 200)
-    ib = InputBox(p, 'color', 'color: ')
-    ib2 = InputBox(p2, 'unsigned_int', 'hello', 20)
-    ib3 = InputBox(p3, 'unsigned_int', 'check this out', 40)
-    ib.draw(window)
-    ib2.draw(window)
-    ib3.draw(window)
+    custom_sim_header = Text(Point(225, 30), 'Custom Simulation')
+    custom_sim_header.setSize(24)
+    custom_sim_header.setStyle('bold')
+    custom_sim_header.draw(window)
 
-    # TODO 
-    # move all labels and input boxes into their own class that can
-    # be cloned, moved, and inserted anywhere on window
-    t1_n = Text(Point(window.width/2.0 - 200.0, window.height/2.0 - 200.0), 
-            '# of particles: ')
-    g1_n = Entry(Point(window.width/2.0 + 100.0, window.height/2.0 - 200.0), 4)
-    g1_n.setText(40)
+    input_n = InputBox(Point(window.width/2.0 - 250.0, window.height/2.0 - 200.0), 
+            'unsigned_int', '# of particles: ', 4, 40)
+    input_n.draw(window)
 
-    t1_color = t1_n.clone()
-    t1_color.setText('color: ')
-    t1_color.move(0, 50)
-    g1_color = g1_n.clone()
-    g1_color.setText('black')
-    g1_color.width = 10
-    g1_color.move(0, 50)
+    input_color = InputBox(input_n.getPointWithOffset(), 'color', 'color: ', 20, 'black')
+    input_color.draw(window)
 
-    t1_r = t1_n.clone()
-    t1_r.setText('radius: ')
-    t1_r.move(0, 100)
-    g1_r = g1_n.clone()
-    g1_r.setText(5.0)
-    g1_r.width = 4
-    g1_r.move(0, 100)
+    input_r = InputBox(input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
+    input_r.draw(window)
 
-    t1_m = t1_n.clone()
-    t1_m.setText('mass: ')
-    t1_m.move(0, 150)
-    g1_m = g1_n.clone()
-    g1_m.setText(1.0)
-    g1_m.width = 4
-    g1_m.move(0, 150)
-    
-    t1_n.draw(window)
-    t1_color.draw(window)
-    t1_r.draw(window)
-    t1_m.draw(window)
+    input_m = InputBox(input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
+    input_m.draw(window)
 
-    g1_n.draw(window)
-    g1_color.draw(window)
-    g1_r.draw(window)
-    g1_m.draw(window)
+    # scenarios
+    scenario_header = Text(Point(650, 30), 'Scenarios')
+    scenario_header.setSize(22)
+    scenario_header.setStyle('bold')
+    scenario_header.draw(window)
 
-    # TODO 
-    # validate inputs
+    ln_1 = Line(Point(500, 0), Point(500, window.height))
+    ln_1.draw(window)
 
-    btn = Button(window, Point(window.width/2.0, window.height/2.0 + 100.0), 
-            200, 100, 'Run Simulation')
-    btn.activate()
+    scenario_1_btn = Button(window, Point(650, 100), 
+            100, 50, 'Default')
+    scenario_1_btn.activate() 
 
-    while True:
+    add_group_btn = Button(window, Point(125, window.height/2.0 + 150), 
+            150, 75, 'Add Group')
+    add_group_btn.activate()    
+
+    simulation_btn = Button(window, Point(375, window.height/2.0 + 150.0), 
+            150, 75, 'Run Simulation')
+    simulation_btn.activate()
+
+    def addGroupToDict(d, n, color, r, m):
+        group_name = 'group' + str(len(d) + 1)
+        group = { 
+            group_name: {
+                'n': n,
+                'color': color,
+                'radius': r,
+                'mass': m,
+                'shape': 'Circle',
+                'width': float(input_r.getInput()) * 2,
+                'height': float(input_r.getInput()) * 2
+            }
+        }
+        d.update(group)
+        return d
+
+    group_data_dict = {}
+    while True:    
         last_clicked_pt = window.getMouse()
         if last_clicked_pt is not None:
-            if btn.clicked(last_clicked_pt):
-                ib.validateInput()
-                kwargs = {
-                    'group1': {
-                        'n': g1_n.getText(),
-                        'color': ib.getInput(),
-                        'radius': g1_r.getText(),
-                        'mass': g1_m.getText(),
-                        'shape': 'Circle',
-                        'width': float(g1_r.getText()) * 2,
-                        'height': float(g1_r.getText()) * 2
-                    }
-                }
-                
-                # group2 = {
-                #     'n': 2,
-                #     'color': 'green',
-                #     'radius': 30.0,
-                #     'mass': 10.0,
-                #     'shape': 'Circle',
-                #     'width': 10.0,
-                #     'height': 10.0
-                # }
+            if simulation_btn.clicked(last_clicked_pt):
+                if (input_n.validateInput() and 
+                        input_color.validateInput() and 
+                        input_r.validateInput() and 
+                        input_m.validateInput()):
+                    
+                    group_data_dict = addGroupToDict(group_data_dict, 
+                            input_n.getInput(), input_color.getInput(), 
+                            input_r.getInput(), input_m.getInput())
 
-                # kwargs = {'group1': group1}
-                data = create_particle_data(**kwargs)
-                set_config(data)
+                    data = create_particle_data(**group_data_dict)
+                    set_config(data)
+                    main()
+                else:
+                    print('invalid inputs')
+            elif add_group_btn.clicked(last_clicked_pt):
+                group_data_dict = addGroupToDict(group_data_dict, 
+                        input_n.getInput(), input_color.getInput(), 
+                        input_r.getInput(), input_m.getInput())
+            elif scenario_1_btn.clicked(last_clicked_pt):
+                global config_flag
+                config_flag = 1
                 main()
+            
             # else:
                 # print('not in button')
 
 def main():
-    if not config_flag:
+    if config_flag == 1:
         dataMap = load_config('config_default.yml')
-    else:
+    elif config_flag == 0:
         dataMap = load_config('config.yml')
 
     menu_options = {"New": main_menu, "Restart": main, "Exit": window.close}

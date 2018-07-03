@@ -126,24 +126,27 @@ class Button:
 
 
 class InputBox:
-    def __init__(self, point, input_type, label_text, char_max = 10):
+    def __init__(self, point, input_type, label_text, char_max = 10, default_val = None):
         allowed_types = ['unsigned_int', 'unsigned_float', 'color']
         if input_type not in allowed_types:
             raise Exception('InputBox: type given is not an allowed type')
+        
+        self.point = point
         self.type = input_type
-
         self.label = Text(point, label_text)
         x_offset = 100 + ((char_max - 10)/2.0 * 9) # difference between default char_max and font size / 2
         self.entry = Entry(Point(point.x + x_offset, point.y), char_max)
+        if default_val is not None:
+            self.setInput(default_val)
 
     def getInput(self):
         return self.entry.getText()
 
     def validateInput(self):
         if self.type == 'unsigned_int':
-            return isinstance(self.getInput(), int)
+            return isinstance(int(self.getInput()), int)
         elif self.type == 'unsigned_float':
-            return isintance(self.getInput(), float)
+            return isinstance(float(self.getInput()), float)
         elif self.type == 'color':
             if (self.getInput() not in COLORS and 
                     not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', self.getInput())):
@@ -151,9 +154,17 @@ class InputBox:
             else:
                 return True
 
+    def setInput(self, val):
+        self.entry.setText(val)
+        if self.validateInput() is not True:
+            self.entry.setText('')
+
     def draw(self, canvas):
         self.label.draw(canvas)
         self.entry.draw(canvas)
+
+    def getPointWithOffset(self):
+        return Point(self.point.x, self.point.y + 50)
 
 
 

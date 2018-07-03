@@ -805,7 +805,7 @@ class Entry(GraphicsObject):
     def setText(self, t):
         self.text.set(t)
 
-            
+
     def setFill(self, color):
         self.fill = color
         if self.entry:
