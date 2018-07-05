@@ -1,0 +1,33 @@
+particles:
+  group1:
+    color: black
+    height: 10.0
+    mass: '1.0'
+    n: '40'
+    radius: '5.0'
+    shape: Circle
+    width: 10.0
+  group2:
+    color: green
+    height: 10.0
+    mass: '1.0'
+    n: '40'
+    radius: '5.0'
+    shape: Circle
+    width: 10.0
+  group3:
+    color: red
+    height: 10.0
+    mass: '1.0'
+    n: '40'
+    radius: '5.0'
+    shape: Circle
+    width: 10.0
+  group4:
+    color: red
+    height: 10.0
+    mass: '1.0'
+    n: '1'
+    radius: '5.0'
+    shape: Circle
+    width: 10.0

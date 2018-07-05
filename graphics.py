@@ -102,6 +102,7 @@ import time, os, sys
 
 try:  # import as appropriate for 2.x vs. 3.x
    import tkinter as tk
+   from tkinter import Menu, Frame
 except:
    import Tkinter as tk
 
@@ -189,10 +190,45 @@ class GraphWin(tk.Canvas):
     def _onKey(self, evnt):
         self.lastKey = evnt.keysym
 
+    def addMenu(self, options):
+        menubar = Menu(self.master)
+
+        for key, val in options.items():
+            menubar.add_command(label=key, command=val)
+        
+        # Top level menu
+        # menubar.add_command(label="New", command=print('hello'))
+        # menubar.add_separator()
+        # menubar.add_command(label="Exit", command=self.close)
+
+        # Drop down menu
+        # filemenu = Menu(menubar, tearoff=0)
+        # filemenu.add_command(label="New", command=print('hello'))
+        # filemenu.add_separator()
+        # filemenu.add_command(label="Exit", command=self.close)
+        # menubar.add_cascade(label="File", menu=filemenu)
+
+        # Pop up menu
+        # menubar.add_command(label="New", command=print('hello'))
+        # menubar.add_separator()
+        # menubar.add_command(label="Exit", command=self.close)
+        # frame = Frame(_root, width=512, height=512)
+        # frame.pack()
+        # def popup(event):
+        #     menu.post(event.x_root, event.y_root)
+        # frame.bind("<Button-3>", popup)
+
+        self.master.config(menu=menubar)
+
+    # clear all drawn items
+    def clear(self):
+        for item in self.items[:]:
+            item.undraw()
+        self.update 
 
     def setBackground(self, color):
         """Set background color of the window"""
-        self.__checkOpen()
+        self.__checkOpen() 
         self.config(bg=color)
         self.__autoflush()
         
@@ -717,7 +753,6 @@ class Text(GraphicsObject):
     def setTextColor(self, color):
         self.setFill(color)
 
-
 class Entry(GraphicsObject):
 
     def __init__(self, p, width):
@@ -727,7 +762,7 @@ class Entry(GraphicsObject):
         self.width = width
         self.text = tk.StringVar(_root)
         self.text.set("")
-        self.fill = "gray"
+        self.fill = "white"
         self.color = "black"
         self.font = DEFAULT_CONFIG['font']
         self.entry = None
@@ -770,7 +805,7 @@ class Entry(GraphicsObject):
     def setText(self, t):
         self.text.set(t)
 
-            
+
     def setFill(self, color):
         self.fill = color
         if self.entry:
