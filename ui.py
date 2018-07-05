@@ -143,16 +143,22 @@ class InputBox:
         return self.entry.getText()
 
     def validateInput(self):
+        flag = True
         if self.type == 'unsigned_int':
-            return isinstance(int(self.getInput()), int)
+            flag = isinstance(int(self.getInput()), int) and int(self.getInput()) > 0
         elif self.type == 'unsigned_float':
-            return isinstance(float(self.getInput()), float)
+            flag = isinstance(float(self.getInput()), float) and float(self.getInput()) > 0 
         elif self.type == 'color':
-            if (self.getInput() not in COLORS and 
-                    not re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', self.getInput())):
-                return False
-            else:
-                return True
+            flag = (self.getInput() in COLORS or 
+                    re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', self.getInput()))
+        
+        if not flag:
+            self.label.setTextColor('red')
+        else:
+            self.label.setTextColor('black')
+        
+        return flag
+                
 
     def setInput(self, val):
         self.entry.setText(val)

@@ -74,6 +74,12 @@ def main_menu():
             150, 75, 'Run Simulation')
     simulation_btn.activate()
 
+    group_data_dict = {}
+    group_data_text = Text(Point(100, 520), 'Extra Groups Added: ' + str(len(group_data_dict)))
+    group_data_text.setSize(12)
+    group_data_text.setStyle('italic')
+    group_data_text.draw(window)
+
     def addGroupToDict(d, n, color, r, m):
         group_name = 'group' + str(len(d) + 1)
         group = { 
@@ -90,7 +96,6 @@ def main_menu():
         d.update(group)
         return d
 
-    group_data_dict = {}
     while True:    
         last_clicked_pt = window.getMouse()
         if last_clicked_pt is not None:
@@ -110,16 +115,18 @@ def main_menu():
                 else:
                     print('invalid inputs')
             elif add_group_btn.clicked(last_clicked_pt):
-                group_data_dict = addGroupToDict(group_data_dict, 
-                        input_n.getInput(), input_color.getInput(), 
-                        input_r.getInput(), input_m.getInput())
+                if (input_n.validateInput() and 
+                        input_color.validateInput() and 
+                        input_r.validateInput() and 
+                        input_m.validateInput()):
+                    group_data_dict = addGroupToDict(group_data_dict, 
+                            input_n.getInput(), input_color.getInput(), 
+                            input_r.getInput(), input_m.getInput())
+                    group_data_text.setText('Extra Groups Added: ' + str(len(group_data_dict))) 
             elif scenario_1_btn.clicked(last_clicked_pt):
                 global config_flag
                 config_flag = 1
                 main()
-            
-            # else:
-                # print('not in button')
 
 def main():
     if config_flag == 1:
