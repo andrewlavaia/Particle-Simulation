@@ -10,6 +10,10 @@ from graphics import GraphWin, Text, Point, Entry, Line
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall
 from ui import *
+import multiprocessing as mp
+import os
+import worker
+import pdb
 
 window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
 dataMap = {}
@@ -170,6 +174,16 @@ def main():
     # initialize collision system
     cs = CollisionSystem(particles)
 
+    # initialize multithreading variables
+    lock = mp.Lock()
+    # cond = mp.Event()
+    worker1 = mp.Process(target=worker.processQueue, args=(worker.work_queue, cs))
+    worker2 = mp.Process(target=worker.processQueue, args=(worker.work_queue, cs))
+    worker1.daemon = True # let boss process terminate worker automatically
+    worker2.daemon = True
+    worker1.start()
+    worker2.start()
+
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
@@ -197,12 +211,12 @@ def main():
         simTime = simTime + elapsed
         
         if simTime > nextLogicTick:
-            cs.processEvents(nextLogicTick)
+            cs.queueCollisionEvents(nextLogicTick)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
-                assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
-                assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
+                # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
+                # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
             nextLogicTick = nextLogicTick + TIME_PER_TICK
         
@@ -221,4 +235,5 @@ def main():
             lastFrameTime = time.time()
     window.close
 
-main()
+if __name__ == '__main__':
+    main()

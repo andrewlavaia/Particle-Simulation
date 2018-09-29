@@ -14,6 +14,11 @@ class Particle:
             vx = None, vy = None, mass= None,
             color = None, shape = "Circle", width = None, height = None):
 
+        # set window to draw and render
+        self.window = window
+        self.window_width = self.window.width
+        self.window_height = self.window.height
+
         # set default values
         if radius == None and shape == "Circle":
             radius = 5.0
@@ -26,9 +31,9 @@ class Particle:
         elif height == None:
             height = 10.0  
         if x == None:
-            x = random.uniform(0 + width/2.0, window.width - height/2.0)
+            x = random.uniform(0 + width/2.0, self.window_width - height/2.0)
         if y == None:
-            y = random.uniform(0 + width/2.0, window.height - height/2.0)
+            y = random.uniform(0 + width/2.0, self.window_height - height/2.0)
         if vx == None:
             vx = random.uniform(-200.0, 200.0)
         if vy == None:
@@ -54,8 +59,6 @@ class Particle:
         # set limits on speed and collisions
         # self.max_speed = 1000000.0
 
-        # set window to draw and render
-        self.window = window
         if shape == "Circle":
             self.shape = Circle(Point(self.x, self.y), radius)
         elif shape == "Rect":
@@ -73,8 +76,15 @@ class Particle:
  
     # equality comparator
     def __eq__(self, other):
-        return ((self.x, self.y, self.shape, self.collisionCnt) ==
-                (other.x, other.y, other.shape, other.collisionCnt))
+        return ((self.x, self.y, self.collisionCnt) ==
+                (other.x, other.y, other.collisionCnt))
+
+    # ignore the following attributes when pickling     
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['shape']
+        del state['window']
+        return state
 
     # Moves particle by time * speed
     def move(self, dt):   
@@ -190,7 +200,7 @@ class Particle:
     def timeToHitHWall(self):
         menu_height = 20.0
         if self.vy > 0:
-            return (self.window.height - self.height/2 - self.y - menu_height) / self.vy 
+            return (self.window_height - self.height/2 - self.y - menu_height) / self.vy 
         elif (self.vy < 0):
             return (0.0 + self.height/2 - self.y) / self.vy
         elif (self.vy == 0):
@@ -199,7 +209,7 @@ class Particle:
     # calculates time (in ms) until collision with vertical wall
     def timeToHitVWall(self):
         if (self.vx > 0):
-            return (self.window.width - self.width/2 - self.x) / self.vx
+            return (self.window_width - self.width/2 - self.x) / self.vx
         elif (self.vx < 0):
             return (0.0 + self.width/2 - self.x) / self.vx
         elif (self.vx == 0):

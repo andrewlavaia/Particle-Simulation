@@ -5,6 +5,7 @@ collision events between two particles.
 '''
 
 import heapq
+import worker
 
 # Defines an Event that will occur at time t between particles a and b
 # if neither a & b are None -> collision with another particle
@@ -44,7 +45,7 @@ class Event:
 # Also used to run simulation.
 class CollisionSystem:
     def __init__(self, particles):
-        self.pq = []                		# priority queue         
+        self.pq = []                		# priority queue   
         self.particles = particles    		# list of particles as a reference
         
         # initialize last event
@@ -83,37 +84,16 @@ class CollisionSystem:
         if simTime + dt <= limit:   
             heapq.heappush(self.pq, evt) 
 
-    # Processes all events in priority queue that
-    # occurred before a given time
-    def processEvents(self, simTime):
-    	while len(self.pq) > 0 and self.pq[0].time < simTime:
+    # Checks if event needs to be processed and adds it to the work_queue
+    def queueCollisionEvents(self, nextLogicTick):   
+        while len(self.pq) > 0 and self.pq[0].time < nextLogicTick:
             # grab top event from priority queue
             evt = heapq.heappop(self.pq)
-
-            # skip event if no longer valid
-            if not evt.isValid():
-                continue
-
-            # skip event if it is same as last event 
-            # this prevents an infinite loop when two
-            # particles are touching and constantly colliding
-            if evt == self.lastEvt:
-                self.lastEvt = evt
-                continue
+            
+            if evt.isValid() and evt != self.lastEvt:
+                self.lastEvt = evt 
             else:
-                self.lastEvt = evt
-
-            # process collisions 
-            a = evt.a
-            b = evt.b
-            if a is not None and b is not None: 
-                a.bounceOff(b)
-                self.predict(a, simTime, 10000)
-                self.predict(b, simTime, 10000)
-            elif a is not None and b is None:
-                a.bounceOffVWall()
-                self.predict(a, simTime, 10000)
-            elif a is None and b is not None:
-                b.bounceOffHWall()
-                self.predict(b, simTime, 10000)
-            #assert(a is not None and b is not None)
+                continue
+            
+            work_item = (evt, nextLogicTick)
+            worker.work_queue.put(work_item)
