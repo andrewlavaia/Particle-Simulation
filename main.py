@@ -8,7 +8,7 @@ import yaml
 import time
 from graphics import GraphWin, Text, Point, Entry, Line
 from collision import CollisionSystem 
-from particles import Particle, Immovable, RectParticle, Wall
+from particles import Particle, Immovable, RectParticle, Wall, ParticleShape
 from queue import PriorityQueue
 from ui import *
 import multiprocessing as mp
@@ -16,7 +16,6 @@ import multiprocessing.managers as mp_mgr
 import os
 import worker
 import pdb
-
 
 class ProcessManager(mp_mgr.SyncManager):
     pass
@@ -157,7 +156,9 @@ def main():
     # cond = mp.Event()    
     manager = Manager()
     pq = manager.PriorityQueue()
-    particles = manager.list()
+    # particles = manager.list()
+    particles = []
+    particle_shapes = []
     nextLogicTick = mp.Value('d', 0.0)
 
     # create particles from config file
@@ -165,7 +166,7 @@ def main():
         curr = dataMap['particles'][key]
         n = int(curr['n'])
         for i in range(0, n):
-            particles.append(Particle(window, 
+            particles.append(Particle(i, window, 
                     radius = float(curr['radius']),
                     color = curr['color'],
                     mass = float(curr['mass']),
@@ -173,21 +174,28 @@ def main():
                     width = float(curr['width']),
                     height = float(curr['height'])
             ))
+            particle_shapes.append(ParticleShape(i, window, 
+                    shape = curr['shape'], 
+                    x = particles[i].x, 
+                    y = particles[i].y, 
+                    radius = float(curr['radius']), 
+                    color = curr['color']
+            ))
 
     # draw all particles
-    for particle in particles:
-        particle.draw()
+    for particle_shape in particle_shapes:
+        particle_shape.draw()
     
     for particle in particles:
         CollisionSystem.predict(particle, 0.0, 10000, particles, pq)
 
     # initialize workers
-    worker1 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
-    worker2 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
-    worker1.daemon = True # let boss process terminate worker automatically
-    worker2.daemon = True
-    worker1.start()
-    worker2.start()
+    # worker1 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
+    # worker2 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
+    # worker1.daemon = True # let boss process terminate worker automatically
+    # worker2.daemon = True
+    # worker1.start()
+    # worker2.start()
 
     # initialize simulation variables
     simTime = 0.0
@@ -214,20 +222,23 @@ def main():
         lastFrameTime = currentTime
 
         simTime = simTime + elapsed
+
+        print(simTime, nextLogicTick.value)
         
         if simTime > nextLogicTick.value:
-
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
             nextLogicTick.value = nextLogicTick.value + TIME_PER_TICK
-        
+           
         else:
             # render updates to window
-            for particle in particles:
-                particle.render()  
+            for particle_shape in particle_shapes:
+                particle_shape.x = particles[particle_shape.index].x
+                particle_shape.y = particles[particle_shape.index].y
+                particle_shape.render()  
 
         # check if user wants to end simulation
         if window.checkMouse() is not None:

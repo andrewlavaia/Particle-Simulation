@@ -9,15 +9,14 @@ from graphics import Point, Circle, Rectangle, color_rgb
 
 # Defines a Particle object which can be used in the Collision Simulator
 class Particle:
-    def __init__(self, window, 
+    def __init__(self, index, window, 
             radius = None, x = None, y = None, 
             vx = None, vy = None, mass= None,
             color = None, shape = "Circle", width = None, height = None):
 
-        # set window to draw and render
-        self.window = window
-        self.window_width = self.window.width
-        self.window_height = self.window.height
+        self.index = index
+        self.window_width = window.width
+        self.window_height = window.height
 
         # set default values
         if radius == None and shape == "Circle":
@@ -79,29 +78,10 @@ class Particle:
         return ((self.x, self.y, self.collisionCnt) ==
                 (other.x, other.y, other.collisionCnt))
 
-    # ignore the following attributes when pickling     
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        if state.get('shape'):
-            del state['shape']
-        if state.get('window'):
-            del state['window']
-        return state
-
     # Moves particle by time * speed
     def move(self, dt):   
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
-
-    # Draws the.shape to a window
-    def draw(self):
-        # self.shape.draw(self.window)
-        pass
-    
-    # Moves.shape to current position on window 
-    def render(self):    
-        # self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
-        pass
 
     def pythagorean(self, side1, side2):
         return math.sqrt((side1 * side1) + (side2 * side2)) 
@@ -332,3 +312,38 @@ class Wall(Particle):
         pass
     def bounceOffHWall(self):
         pass
+
+class ParticleShape():
+    def __init__(self, index, window, shape, x, y, radius=None, color=None):
+        self.index = index
+        self.window = window
+        self.x = x
+        self.y = y
+        
+        if radius == None and shape == "Circle":
+            radius = 5.0
+
+        if color == None:
+            red = random.randint(0, 255)
+            green = random.randint(0, 255)
+            blue = random.randint(0, 255)
+            color = color_rgb(red, green, blue)
+
+        if shape == "Circle":
+            self.shape = Circle(Point(self.x, self.y), radius)
+        elif shape == "Rect":
+            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0), 
+                Point(self.x + width/2.0, self.y + height/2.0))
+        else:
+            assert(False)
+        
+        self.shape.setFill(color)
+        self.shape.setOutline(color)
+
+    # Draws the.shape to a window
+    def draw(self):
+        self.shape.draw(self.window)
+    
+    # Moves.shape to current position on window 
+    def render(self):    
+        self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
