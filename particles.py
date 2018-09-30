@@ -82,8 +82,10 @@ class Particle:
     # ignore the following attributes when pickling     
     def __getstate__(self):
         state = self.__dict__.copy()
-        del state['shape']
-        del state['window']
+        if state.get('shape'):
+            del state['shape']
+        if state.get('window'):
+            del state['window']
         return state
 
     # Moves particle by time * speed
@@ -93,11 +95,13 @@ class Particle:
 
     # Draws the.shape to a window
     def draw(self):
-        self.shape.draw(self.window)
+        # self.shape.draw(self.window)
+        pass
     
     # Moves.shape to current position on window 
     def render(self):    
-        self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
+        # self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
+        pass
 
     def pythagorean(self, side1, side2):
         return math.sqrt((side1 * side1) + (side2 * side2)) 

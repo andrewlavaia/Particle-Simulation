@@ -9,15 +9,24 @@ import time
 from graphics import GraphWin, Text, Point, Entry, Line
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall
+from queue import PriorityQueue
 from ui import *
 import multiprocessing as mp
+import multiprocessing.managers as mp_mgr
 import os
 import worker
 import pdb
 
-window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
-dataMap = {}
-config_flag = 1
+
+class ProcessManager(mp_mgr.SyncManager):
+    pass
+
+ProcessManager.register("PriorityQueue", PriorityQueue)
+
+def Manager():
+    m = ProcessManager()
+    m.start()
+    return m
 
 def load_config(file_string):
     with open(file_string) as f:
@@ -143,7 +152,13 @@ def main():
     window.setBackground('white')
     window.clear()
 
-    particles = []
+    # initialize multithreading variables
+    # lock = mp.Lock()
+    # cond = mp.Event()    
+    manager = Manager()
+    pq = manager.PriorityQueue()
+    particles = manager.list()
+    nextLogicTick = mp.Value('d', 0.0)
 
     # create particles from config file
     for key in dataMap['particles']:
@@ -159,26 +174,16 @@ def main():
                     height = float(curr['height'])
             ))
 
-    # particles.append(SquareParticle(window, color = 'green'))
-    # particles.append(Immovable(window, radius = 100, x = 400, y = 400, color = 'red'))
-    
-    # # create walls
-    # for i in range(0, 30):  
-    #     particles.append(Wall(window, x = 400, y = i*4, color = 'red'))
-    #     particles.append(Wall(window, x = 400, y = window.height - i*4, color = 'red'))
-
     # draw all particles
     for particle in particles:
         particle.draw()
+    
+    for particle in particles:
+        CollisionSystem.predict(particle, 0.0, 10000, particles, pq)
 
-    # initialize collision system
-    cs = CollisionSystem(particles)
-
-    # initialize multithreading variables
-    lock = mp.Lock()
-    # cond = mp.Event()
-    worker1 = mp.Process(target=worker.processQueue, args=(worker.work_queue, cs))
-    worker2 = mp.Process(target=worker.processQueue, args=(worker.work_queue, cs))
+    # initialize workers
+    worker1 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
+    worker2 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
     worker1.daemon = True # let boss process terminate worker automatically
     worker2.daemon = True
     worker1.start()
@@ -190,7 +195,7 @@ def main():
 
     TICKS_PER_SECOND = 120 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
-    nextLogicTick = TIME_PER_TICK
+    nextLogicTick.value = TIME_PER_TICK
 
     lastFrameTime = time.time()
 
@@ -210,15 +215,14 @@ def main():
 
         simTime = simTime + elapsed
         
-        if simTime > nextLogicTick:
-            cs.queueCollisionEvents(nextLogicTick)
+        if simTime > nextLogicTick.value:
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
-            nextLogicTick = nextLogicTick + TIME_PER_TICK
+            nextLogicTick.value = nextLogicTick.value + TIME_PER_TICK
         
         else:
             # render updates to window
@@ -236,4 +240,10 @@ def main():
     window.close
 
 if __name__ == '__main__':
+    window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
+    dataMap = {}
+    config_flag = 1
+    
+    # particles = []
+
     main()
