@@ -1,6 +1,6 @@
 particles:
   group1:
-    n: 25
+    n: 20
     color: black
     radius: 5.0
     mass: 1.0

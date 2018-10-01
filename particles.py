@@ -268,7 +268,6 @@ class Immovable(Particle):
     def moveByForce(self, that, fx, fy):
         that.vx = that.vx - (fx / self.mass)
         that.vy = that.vy - (fy / self.mass)
-        self.collisionCnt = self.collisionCnt + 1
 
     def bounceOff(self, that):
         pass

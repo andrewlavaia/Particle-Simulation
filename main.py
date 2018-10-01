@@ -158,6 +158,7 @@ def main():
     manager = Manager()
     # pq = manager.PriorityQueue()
     # particles = manager.list()
+    work_queue = mp.Queue()
     pq = []
     particles = []
     particle_shapes = []
@@ -193,7 +194,7 @@ def main():
         particle_shape.draw()
     
     for particle in particles:
-        CollisionSystem.predict(particle, 0.0, 10000, particles, pq)
+        CollisionSystem.predict(particle, 0.0, 10000, particles, work_queue)
 
     # initialize workers
     # worker1 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
@@ -230,10 +231,11 @@ def main():
         simTime = simTime + elapsed
 
         if simTime > nextLogicTick.value:
-            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value)
+            CollisionSystem.processWorkQueue(work_queue, pq)
+            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value, work_queue)
 
             for particle in particles:
-                print(particle.index, particle.collisionCnt)
+                # print(particle.index, particle.collisionCnt)
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
@@ -262,6 +264,4 @@ if __name__ == '__main__':
     dataMap = {}
     config_flag = 1
     
-    # particles = []
-
     main()
