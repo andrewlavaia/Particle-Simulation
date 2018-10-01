@@ -9,8 +9,8 @@ from graphics import Point, Circle, Rectangle, color_rgb
 
 # Defines a Particle object which can be used in the Collision Simulator
 class Particle:
-    def __init__(self, index, window, 
-            radius = None, x = None, y = None, 
+    def __init__(self, index, window,
+            radius = None, x = None, y = None,
             vx = None, vy = None, mass= None,
             color = None, shape = "Circle", width = None, height = None):
 
@@ -24,11 +24,11 @@ class Particle:
         if shape == "Circle":
             width = radius * 2.0
         elif width == None:
-            width = 10.0    
+            width = 10.0
         if shape == "Circle":
             height = radius * 2.0
         elif height == None:
-            height = 10.0  
+            height = 10.0
         if x == None:
             x = random.uniform(0 + width/2.0, self.window_width - height/2.0)
         if y == None:
@@ -46,12 +46,12 @@ class Particle:
             color = color_rgb(red, green, blue)
 
         self.x = x                      # position
-        self.y = y                        
+        self.y = y
         self.vx = vx                    # speed
         self.vy = vy
         self.mass = mass                # used for collision physics
         self.radius = radius
-        self.width = width    
+        self.width = width
         self.height = height
         self.shape_type = shape
 
@@ -61,30 +61,30 @@ class Particle:
         if shape == "Circle":
             self.shape = Circle(Point(self.x, self.y), radius)
         elif shape == "Rect":
-            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0), 
+            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0),
                 Point(self.x + width/2.0, self.y + height/2.0))
         else:
             assert(False)
-        
+
         self.shape.setFill(color)
         self.shape.setOutline(color)
 
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
                                             # invalidated
- 
+
     # equality comparator
     def __eq__(self, other):
         return ((self.x, self.y, self.collisionCnt) ==
                 (other.x, other.y, other.collisionCnt))
 
     # Moves particle by time * speed
-    def move(self, dt):   
+    def move(self, dt):
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
 
     def pythagorean(self, side1, side2):
-        return math.sqrt((side1 * side1) + (side2 * side2)) 
+        return math.sqrt((side1 * side1) + (side2 * side2))
 
     def calcAngle(self, dy, dx):
         radians = math.atan2(dy, dx) # between -pi and pi
@@ -98,20 +98,20 @@ class Particle:
     def distFromCenter(self, deg):
         if self.shape_type == "Circle":
             return self.radius
-        
+
         twoPI = math.pi * 2
         theta = deg * math.pi / 180
-  
+
         while theta < -math.pi:
             theta += twoPI
-  
+
         while theta > math.pi:
             theta -= twoPI
-            
+
         rectAtan = math.atan2(self.height, self.width)
         tanTheta = math.tan(theta)
 
-        region = 0  
+        region = 0
         if (theta > -rectAtan) and (theta <= rectAtan):
             region = 1
         elif (theta > rectAtan) and (theta <= (math.pi - rectAtan)):
@@ -120,63 +120,63 @@ class Particle:
             region = 3
         else:
             region = 4
-    
+
         edgePoint = Point(self.width/2.0, self.height/2.0)
         xFactor = 1
         yFactor = 1
-        
+
         if region == 1 or region == 2:
             yFactor = -1
         elif region == 3 or region == 4:
             xFactor = -1
-        
+
         if region == 1 or region == 3:
             edgePoint.x = edgePoint.x + (xFactor * (self.width / 2.0))                # "Z0"
             edgePoint.y = edgePoint.y + (yFactor * (self.width / 2.0) * tanTheta)
         else:
             edgePoint.x = edgePoint.x + (xFactor * (self.height / (2.0 * tanTheta)))  # "Z1"
             edgePoint.y = edgePoint.y + (yFactor * (self.height /  2.0))
-        
-        return self.pythagorean(edgePoint.x - (self.width/2.0), 
-                                edgePoint.y - (self.height/2.0)) 
+
+        return self.pythagorean(edgePoint.x - (self.width/2.0),
+                                edgePoint.y - (self.height/2.0))
 
     # Calculates time until collision with another Particle
-    
+
     # Need a new collision detection algorithm for rectangles...
     #  This algo is not computing correctly for long rectangles
     #  because it is computing the angle from the center
-    #  and not the edge (ie particle traveling straight up 
+    #  and not the edge (ie particle traveling straight up
     #  won't hit left or right edges of long rectangle because
-    #  the angle calc tells it to use the vertical distance) 
+    #  the angle calc tells it to use the vertical distance)
     def timeToHit(self, that):
         if self == that:
-            return math.inf 
+            return math.inf
 
         # distance
         dx = that.x - self.x # switch to distance between nearest points?
         dy = that.y - self.y
-        
+
         # speed
-        dvx = that.vx - self.vx 
+        dvx = that.vx - self.vx
         dvy = that.vy - self.vy
-        
+
         # collision prediction
         dvdr = dx*dvx + dy*dvy
-        if dvdr > 0: 
+        if dvdr > 0:
             return math.inf
         dvdv = dvx*dvx + dvy*dvy
         drdr = dx*dx + dy*dy
-        
+
         dist_from_center1 = self.distFromCenter(self.calcAngle(dx, dy))
-        dist_from_center2 = that.distFromCenter(that.calcAngle(-dx, -dy)) 
+        dist_from_center2 = that.distFromCenter(that.calcAngle(-dx, -dy))
         sigma = dist_from_center1 + dist_from_center2
-        
+
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
-        if d <= 0: 
+        if d <= 0:
             return math.inf
-        
-        if dvdv == 0:    
-            return math.inf # both particles are stationary 
+
+        if dvdv == 0:
+            return math.inf # both particles are stationary
 
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
@@ -184,7 +184,7 @@ class Particle:
     def timeToHitHWall(self):
         menu_height = 20.0
         if self.vy > 0:
-            return (self.window_height - self.height/2 - self.y - menu_height) / self.vy 
+            return (self.window_height - self.height/2 - self.y - menu_height) / self.vy
         elif (self.vy < 0):
             return (0.0 + self.height/2 - self.y) / self.vy
         elif (self.vy == 0):
@@ -221,7 +221,7 @@ class Particle:
     def bounceOff(self, that):
         dx = that.x - self.x
         dy = that.y - self.y
-        dvx = that.vx - self.vx 
+        dvx = that.vx - self.vx
         dvy = that.vy - self.vy
 
         # dot product
@@ -229,7 +229,7 @@ class Particle:
 
         # calculate distance between centers
         dist = self.pythagorean(dx, dy)
-        
+
         # calculate magnitude of force
         J = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
         fx = J * dx / dist
@@ -245,11 +245,11 @@ class Particle:
 
     # adjusts velocity of object after colliding with horizontal wall
     def bounceOffHWall(self):
-        self.vy = -1 * self.vy 
+        self.vy = -1 * self.vy
         self.collisionCnt = self.collisionCnt + 1
 
 class Immovable(Particle):
-    def __init__(self, window, 
+    def __init__(self, window,
         radius = None, x = None, y = None, color = None):
 
         # call base class constructor
@@ -259,9 +259,9 @@ class Immovable(Particle):
     def timeToHit(self, that):
         return math.inf
     def timeToHitVWall(self):
-        return math.inf 
+        return math.inf
     def timeToHitHWall(self):
-        return math.inf 
+        return math.inf
 
     # double force for "that" particle
     # needed otherwise collisions with this particle lose energy
@@ -278,26 +278,26 @@ class Immovable(Particle):
         pass
 
 class RectParticle(Particle):
-    def __init__(self, window, radius = None, 
-        x = None, y = None, vx = None, vy = None, 
+    def __init__(self, window, radius = None,
+        x = None, y = None, vx = None, vy = None,
         mass = None, color = None, width = None, height = None):
 
-        super().__init__(window, radius, x, y, vx, vy, mass, color, 
-            shape = "Rect", width = width, height = height)  
+        super().__init__(window, radius, x, y, vx, vy, mass, color,
+            shape = "Rect", width = width, height = height)
 
 class Wall(Particle):
-    def __init__(self, window, 
+    def __init__(self, window,
         radius = None, x = None, y = None, color = None):
 
-        super().__init__(window, 1.0, x, y, 0.0, 0.0, 1.0, color, shape = "Rect") 
-        
+        super().__init__(window, 1.0, x, y, 0.0, 0.0, 1.0, color, shape = "Rect")
+
     # let other particles calculate time to hit
     def timeToHit(self, that):
         return math.inf
     def timeToHitVWall(self):
-        return math.inf 
+        return math.inf
     def timeToHitHWall(self):
-        return math.inf 
+        return math.inf
 
     # double force for "that" particle
     # needed otherwise collisions with this particle lose energy
@@ -313,13 +313,16 @@ class Wall(Particle):
     def bounceOffHWall(self):
         pass
 
+
+# Defines a shape object to be used for drawing the 
+# corresponding Particle object with the same index
 class ParticleShape():
     def __init__(self, index, window, shape, x, y, radius=None, color=None):
         self.index = index
         self.window = window
         self.x = x
         self.y = y
-        
+
         if radius == None and shape == "Circle":
             radius = 5.0
 
@@ -332,18 +335,16 @@ class ParticleShape():
         if shape == "Circle":
             self.shape = Circle(Point(self.x, self.y), radius)
         elif shape == "Rect":
-            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0), 
+            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0),
                 Point(self.x + width/2.0, self.y + height/2.0))
         else:
             assert(False)
-        
+
         self.shape.setFill(color)
         self.shape.setOutline(color)
 
-    # Draws the.shape to a window
     def draw(self):
         self.shape.draw(self.window)
-    
-    # Moves.shape to current position on window 
-    def render(self):    
+
+    def render(self):
         self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())

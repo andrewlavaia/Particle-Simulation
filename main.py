@@ -10,6 +10,7 @@ from graphics import GraphWin, Text, Point, Entry, Line
 from collision import CollisionSystem 
 from particles import Particle, Immovable, RectParticle, Wall, ParticleShape
 from queue import PriorityQueue
+import heapq
 from ui import *
 import multiprocessing as mp
 import multiprocessing.managers as mp_mgr
@@ -155,8 +156,9 @@ def main():
     # lock = mp.Lock()
     # cond = mp.Event()    
     manager = Manager()
-    pq = manager.PriorityQueue()
+    # pq = manager.PriorityQueue()
     # particles = manager.list()
+    pq = []
     particles = []
     particle_shapes = []
     nextLogicTick = mp.Value('d', 0.0)
@@ -166,6 +168,10 @@ def main():
         curr = dataMap['particles'][key]
         n = int(curr['n'])
         for i in range(0, n):
+            # TODO replace with a factory method that will
+            # create the particle and particle shape, keep
+            # a reference count, and add them to the appropriate
+            # containers in lockstep
             particles.append(Particle(i, window, 
                     radius = float(curr['radius']),
                     color = curr['color'],
@@ -223,10 +229,11 @@ def main():
 
         simTime = simTime + elapsed
 
-        print(simTime, nextLogicTick.value)
-        
         if simTime > nextLogicTick.value:
+            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value)
+
             for particle in particles:
+                print(particle.index, particle.collisionCnt)
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)

@@ -5,6 +5,8 @@ collision events between two particles.
 '''
 
 import worker
+import time
+import heapq
 
 # Defines an Event that will occur at time t between particles a and b
 # if neither a & b are None -> collision with another particle
@@ -70,33 +72,55 @@ class CollisionSystem:
             evt = Event(minTime, a, b)
 
             if simTime + dt <= limit: 
-                pq.put(evt)
+                # pq.put(evt)
+                heapq.heappush(pq, evt)
         
         # insert collision time with every wall into 
         # the priority queue
         dt = a.timeToHitVWall()
         evt = Event(simTime + dt, a, None)
         if simTime + dt <= limit:
-            pq.put(evt)
+            # pq.put(evt)
+            heapq.heappush(pq, evt)
         dt = a.timeToHitHWall()
         evt = Event(simTime + dt, None, a)
         if simTime + dt <= limit:   
-            pq.put(evt) 
+            # pq.put(evt) 
+            heapq.heappush(pq, evt)
 
-        # print(len(pq))
+    def processCollisionEvents(particles, pq, nextLogicTick):  
+        lastEvt = None 
+        while len(pq) > 0:
+            # print("getting item off queue")
+            # evt = pq.get()
+            evt = heapq.heappop(pq)
 
-    # # Checks if event needs to be processed and adds it to the work_queue
-    # def queueCollisionEvents(self, work_queue, nextLogicTick):   
-    #     while len(self.pq) > 0 and self.pq[0].time < nextLogicTick:
-    #         # grab top event from priority queue
-    #         evt = heapq.heappop(self.pq)
+            if evt.time > nextLogicTick:
+                # print("not enough time has passed, putting item back in queue")
+                # pq.put(evt)
+                # pq.task_done()
+                heapq.heappush(pq, evt)
+                return
             
-    #         if evt.isValid() and evt != self.lastEvt:
-    #             self.lastEvt = evt 
-    #         else:
-    #             continue
+            if evt.isValid() and (lastEvt is None or evt != lastEvt):
+                lastEvt = evt 
+            else:
+                # pq.task_done()
+                continue
+
+            a = evt.a
+            b = evt.b
+            if a is not None and b is not None:
+                particles[a.index].bounceOff(particles[b.index])
+                CollisionSystem.predict(particles[a.index], nextLogicTick, 10000, particles, pq)
+                CollisionSystem.predict(particles[b.index], nextLogicTick, 10000, particles, pq)
+            elif a is not None and b is None:
+                particles[a.index].bounceOffVWall()
+                CollisionSystem.predict(particles[a.index], nextLogicTick, 10000, particles, pq)
+            elif a is None and b is not None:
+                particles[b.index].bounceOffHWall()
+                CollisionSystem.predict(particles[b.index], nextLogicTick, 10000, particles, pq)
             
-    #         a = evt.a
-    #         b = evt.b
-    #         work_item = (a, b, nextLogicTick)
-    #         work_queue.put(work_item)
+            # pq.task_done()
+
+
