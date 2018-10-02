@@ -15,7 +15,6 @@ from ui import *
 import multiprocessing as mp
 import multiprocessing.managers as mp_mgr
 import os
-import worker
 import pdb
 
 class ProcessManager(mp_mgr.SyncManager):
@@ -158,7 +157,8 @@ def main():
     manager = Manager()
     # pq = manager.PriorityQueue()
     # particles = manager.list()
-    work_queue = mp.Queue()
+    work_completed_q = mp.Queue()
+    work_requested_q = mp.Queue()
     pq = []
     particles = []
     particle_shapes = []
@@ -194,7 +194,7 @@ def main():
         particle_shape.draw()
     
     for particle in particles:
-        CollisionSystem.predict(particle, 0.0, 10000, particles, work_queue)
+        CollisionSystem.predict(particle, 0.0, 10000, particles, work_completed_q)
 
     # initialize workers
     # worker1 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
@@ -231,8 +231,9 @@ def main():
         simTime = simTime + elapsed
 
         if simTime > nextLogicTick.value:
-            CollisionSystem.processWorkQueue(work_queue, pq)
-            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value, work_queue)
+            CollisionSystem.processWorkRequests(work_requested_q, work_completed_q)
+            CollisionSystem.processCompletedWork(work_completed_q, pq)
+            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value, work_requested_q, work_completed_q)
 
             for particle in particles:
                 # print(particle.index, particle.collisionCnt)

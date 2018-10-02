@@ -4,7 +4,7 @@ Defines CollisionSystem which handles
 collision events between two particles.
 '''
 
-import worker
+from worker import WorkRequest
 import time
 import heapq
 
@@ -52,7 +52,7 @@ class CollisionSystem:
 
     # Inserts all predicted collisions with a given particle as Events 
     # into priority queue. Event time is the time since simulation began.
-    def predict(a, simTime, limit, particles, work_queue):
+    def predict(a, simTime, limit, particles, result_q):
         if a is None:
             return
         
@@ -65,30 +65,35 @@ class CollisionSystem:
             evt = Event(minTime, a.index, b.index, a.collisionCnt, b.collisionCnt)
 
             if simTime + dt <= limit: 
-                work_queue.put(evt)
+                result_q.put(evt)
         
         # insert collision time with every wall into the priority queue
         dt = a.timeToHitVWall()
         evt = Event(simTime + dt, a.index, None, a.collisionCnt, None)
         if simTime + dt <= limit:
-            work_queue.put(evt)
+            result_q.put(evt)
         dt = a.timeToHitHWall()
         evt = Event(simTime + dt, None, a.index, None, a.collisionCnt)
         if simTime + dt <= limit:   
-            work_queue.put(evt)
+            result_q.put(evt)
 
-    def processWorkQueue(work_queue, pq):
-        while not work_queue.empty():
-            evt = work_queue.get()
+    def processCompletedWork(work_completed_q, pq):
+        while not work_completed_q.empty():
+            evt = work_completed_q.get()
             heapq.heappush(pq, evt)
 
-    def processCollisionEvents(particles, pq, nextLogicTick, work_queue):  
+    def processWorkRequests(work_q, result_q): 
+        while not work_q.empty():
+            work = work_q.get()
+            CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, result_q)
+
+    def processCollisionEvents(particles, pq, nextLogicTick, work_q, result_q):  
         lastEvt = None
         while len(pq) > 0 and pq[0].time < nextLogicTick:
             evt = heapq.heappop(pq)
             
             if evt.isValid(particles) and (lastEvt is None or evt != lastEvt):
-                lastEvt = evt 
+                lastEvt = evt # prevents infinite collision errors
             else:
                 continue
 
@@ -96,13 +101,13 @@ class CollisionSystem:
             b = evt.b
             if a is not None and b is not None:
                 particles[a].bounceOff(particles[b])
-                CollisionSystem.predict(particles[a], nextLogicTick, 10000, particles, work_queue)
-                CollisionSystem.predict(particles[b], nextLogicTick, 10000, particles, work_queue)
+                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles))
+                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles))
             elif a is not None and b is None:
                 particles[a].bounceOffVWall()
-                CollisionSystem.predict(particles[a], nextLogicTick, 10000, particles, work_queue)
+                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles))
             elif a is None and b is not None:
                 particles[b].bounceOffHWall()
-                CollisionSystem.predict(particles[b], nextLogicTick, 10000, particles, work_queue)
+                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles))
 
 
