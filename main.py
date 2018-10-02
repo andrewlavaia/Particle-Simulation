@@ -155,7 +155,6 @@ def main():
     # lock = mp.Lock()
     # cond = mp.Event()    
     manager = Manager()
-    # pq = manager.PriorityQueue()
     # particles = manager.list()
     work_completed_q = mp.Queue()
     work_requested_q = mp.Queue()
@@ -197,12 +196,12 @@ def main():
         CollisionSystem.predict(particle, 0.0, 10000, particles, work_completed_q)
 
     # initialize workers
-    # worker1 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
-    # worker2 = mp.Process(target=worker.processQueue, args=(particles, pq, nextLogicTick))
-    # worker1.daemon = True # let boss process terminate worker automatically
-    # worker2.daemon = True
-    # worker1.start()
-    # worker2.start()
+    num_workers = 4
+    workers = []
+    for n in range(0, num_workers):
+        workers.append(mp.Process(target=CollisionSystem.processWorkRequests, args=(work_requested_q, work_completed_q)))
+        workers[n].daemon = True
+        workers[n].start()
 
     # initialize simulation variables
     simTime = 0.0
@@ -231,12 +230,11 @@ def main():
         simTime = simTime + elapsed
 
         if simTime > nextLogicTick.value:
-            CollisionSystem.processWorkRequests(work_requested_q, work_completed_q)
+            # CollisionSystem.processWorkRequests(work_requested_q, work_completed_q)
             CollisionSystem.processCompletedWork(work_completed_q, pq)
             CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value, work_requested_q, work_completed_q)
 
             for particle in particles:
-                # print(particle.index, particle.collisionCnt)
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)

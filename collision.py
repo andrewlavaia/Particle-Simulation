@@ -5,6 +5,7 @@ collision events between two particles.
 '''
 
 from worker import WorkRequest
+import multiprocessing as mp
 import time
 import heapq
 
@@ -77,14 +78,18 @@ class CollisionSystem:
         if simTime + dt <= limit:   
             result_q.put(evt)
 
-    def processCompletedWork(work_completed_q, pq):
-        while not work_completed_q.empty():
-            evt = work_completed_q.get()
+    def processCompletedWork(result_q, pq):
+        while not result_q.empty():
+            evt = result_q.get()
             heapq.heappush(pq, evt)
 
     def processWorkRequests(work_q, result_q): 
-        while not work_q.empty():
+        print("{0} started".format(mp.current_process().name))
+        while True:
+            # if work_q.empty():
+                # wait for signal?
             work = work_q.get()
+            print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
             CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, result_q)
 
     def processCollisionEvents(particles, pq, nextLogicTick, work_q, result_q):  
