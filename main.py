@@ -17,16 +17,7 @@ import multiprocessing.managers as mp_mgr
 import os
 import pdb
 
-class ProcessManager(mp_mgr.SyncManager):
-    pass
-
-ProcessManager.register("PriorityQueue", PriorityQueue)
-
-def Manager():
-    m = ProcessManager()
-    m.start()
-    return m
-
+# TODO move all scenario, config, and menu functions to their own file or class
 def load_config(file_string):
     with open(file_string) as f:
         dataMap = yaml.safe_load(f)
@@ -141,6 +132,8 @@ def main_menu():
                 main()
 
 def main():
+    dataMap = {}
+    config_flag = 1
     if config_flag == 1:
         dataMap = load_config('config_default.yml')
     elif config_flag == 0:
@@ -151,17 +144,14 @@ def main():
     window.setBackground('white')
     window.clear()
 
-    # initialize multithreading variables
-    # lock = mp.Lock()
-    # cond = mp.Event()    
-    manager = Manager()
-    # particles = manager.list()
-    work_completed_q = mp.Queue()
-    work_requested_q = mp.Queue()
+    # globals
     pq = []
     particles = []
     particle_shapes = []
-    nextLogicTick = mp.Value('d', 0.0)
+
+    # initialize multithreading variables
+    work_completed_q = mp.Queue()
+    work_requested_q = mp.Queue()
 
     # create particles from config file
     for key in dataMap['particles']:
@@ -209,7 +199,7 @@ def main():
 
     TICKS_PER_SECOND = 120 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
-    nextLogicTick.value = TIME_PER_TICK
+    nextLogicTick = TIME_PER_TICK
 
     lastFrameTime = time.time()
 
@@ -229,17 +219,16 @@ def main():
 
         simTime = simTime + elapsed
 
-        if simTime > nextLogicTick.value:
-            # CollisionSystem.processWorkRequests(work_requested_q, work_completed_q)
+        if simTime > nextLogicTick:
             CollisionSystem.processCompletedWork(work_completed_q, pq)
-            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick.value, work_requested_q, work_completed_q)
+            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick, work_requested_q, work_completed_q)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
-            nextLogicTick.value = nextLogicTick.value + TIME_PER_TICK
+            nextLogicTick = nextLogicTick + TIME_PER_TICK
            
         else:
             # render updates to window
@@ -259,8 +248,6 @@ def main():
     window.close
 
 if __name__ == '__main__':
-    window = GraphWin('Particle Simulation', 800, 600, autoflush=False)
-    dataMap = {}
-    config_flag = 1
-    
+    window = GraphWin('Particle Simulation', 1024, 768, autoflush=False)
+
     main()

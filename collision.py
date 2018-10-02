@@ -15,7 +15,7 @@ import heapq
 # if both a & b are None -> do nothing
 class Event:
     def __init__(self, t, a, b, cntA, cntB):
-        self.time = t    
+        self.time = t  # time from start of simulation
         self.a = a
         self.b = b
         self.countA = cntA
@@ -35,47 +35,32 @@ class Event:
             return False
         return True
 
-# Collision System is used to predict when two particles will
-# colide and store those events in a min priority queue.
-# Also used to run simulation.
+# Collision System is used to predict when and how particles will collide
 class CollisionSystem:
-    # def __init__(self, particles):
-    #     self.pq = []                		# priority queue   
-    #     self.particles = particles    		# list of particles as a reference
-        
-    #     # initialize last event
-    #     assert(len(particles) >= 2)
-    #     self.lastEvt = Event(-1.0, self.particles[0], self.particles[1])
-
-    #     # initalize pq with initial predictions
-    #     for particle in particles:
-    #     	self.predict(particle, 0.0, 10000, particles, pq)	
-
-    # Inserts all predicted collisions with a given particle as Events 
-    # into priority queue. Event time is the time since simulation began.
-    def predict(a, simTime, limit, particles, result_q):
+    # Inserts all predicted collisions with a given particle as Events into the queue.
+    def predict(a, next_logic_tick, limit, particles, result_q):
         if a is None:
             return
         
         # insert predicted collision with every other 
         # particle as an event into the priority queue 
-        # if collision time is between simTime and limit
+        # if collision time is between next_logic_tick and limit
         for b in particles:
             dt = a.timeToHit(b)
-            minTime = max(simTime - 1.0, simTime + dt) # collision shouldn't occur before current simTime
+            minTime = max(next_logic_tick - 1.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick
             evt = Event(minTime, a.index, b.index, a.collisionCnt, b.collisionCnt)
 
-            if simTime + dt <= limit: 
+            if next_logic_tick + dt <= limit: 
                 result_q.put(evt)
         
-        # insert collision time with every wall into the priority queue
+        # insert collision time with every wall into the queue
         dt = a.timeToHitVWall()
-        evt = Event(simTime + dt, a.index, None, a.collisionCnt, None)
-        if simTime + dt <= limit:
+        evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
+        if next_logic_tick + dt <= limit:
             result_q.put(evt)
         dt = a.timeToHitHWall()
-        evt = Event(simTime + dt, None, a.index, None, a.collisionCnt)
-        if simTime + dt <= limit:   
+        evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
+        if next_logic_tick + dt <= limit:   
             result_q.put(evt)
 
     def processCompletedWork(result_q, pq):
@@ -86,9 +71,7 @@ class CollisionSystem:
     def processWorkRequests(work_q, result_q): 
         print("{0} started".format(mp.current_process().name))
         while True:
-            # if work_q.empty():
-                # wait for signal?
-            work = work_q.get()
+            work = work_q.get() # blocks automatically when q is empty
             print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
             CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, result_q)
 
