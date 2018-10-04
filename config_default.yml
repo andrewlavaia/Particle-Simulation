@@ -1,9 +1,25 @@
 particles:
   group1:
     n: 100
-    color: black
+    color: random
     radius: 5.0
     mass: 1.0
     shape: "Circle"
     width: 10.0
     height: 10.0
+  group2:
+    n: 3
+    color: random
+    radius: 40.0
+    mass: 5.0
+    shape: "Circle"
+    width: 80.0
+    height: 80.0
+  group3:
+    n: 50
+    color: black
+    radius: 3.0
+    mass: 0.5
+    shape: "Circle"
+    width: 6.0
+    height: 6.0

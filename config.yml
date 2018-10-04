@@ -2,8 +2,8 @@ particles:
   group1:
     color: black
     height: 10.0
-    mass: '1.0'
-    n: '40'
-    radius: '5.0'
+    mass: 1.0
+    n: 200
+    radius: 5.0
     shape: Circle
     width: 10.0

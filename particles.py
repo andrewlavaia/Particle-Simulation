@@ -39,7 +39,7 @@ class Particle:
             vy = random.uniform(-200.0, 200.0)
         if mass == None:
             mass = 1.0
-        if color == None:
+        if color == None or color == "random":
             red = random.randint(0, 255)
             green = random.randint(0, 255)
             blue = random.randint(0, 255)
@@ -54,20 +54,10 @@ class Particle:
         self.width = width
         self.height = height
         self.shape_type = shape
+        self.color = color
 
         # set limits on speed and collisions
         # self.max_speed = 1000000.0
-
-        if shape == "Circle":
-            self.shape = Circle(Point(self.x, self.y), radius)
-        elif shape == "Rect":
-            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0),
-                Point(self.x + width/2.0, self.y + height/2.0))
-        else:
-            assert(False)
-
-        self.shape.setFill(color)
-        self.shape.setOutline(color)
 
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
@@ -316,34 +306,42 @@ class Wall(Particle):
 # Defines a shape object to be used for drawing the 
 # corresponding Particle object with the same index
 class ParticleShape():
-    def __init__(self, index, window, shape, x, y, radius=None, color=None):
+    def __init__(self, index, window, particle):
         self.index = index
         self.window = window
-        self.x = x
-        self.y = y
+        self.x = particle.x
+        self.y = particle.y
+        self.color = particle.color
+        self.radius = particle.radius
+        self.height = particle.height
+        self.width = particle.width
 
-        if radius == None and shape == "Circle":
-            radius = 5.0
-
-        if color == None:
-            red = random.randint(0, 255)
-            green = random.randint(0, 255)
-            blue = random.randint(0, 255)
-            color = color_rgb(red, green, blue)
-
-        if shape == "Circle":
-            self.shape = Circle(Point(self.x, self.y), radius)
-        elif shape == "Rect":
-            self.shape = Rectangle(Point(self.x - width/2.0, self.y - height/2.0),
-                Point(self.x + width/2.0, self.y + height/2.0))
+        if particle.shape_type == "Circle":
+            self.shape = Circle(Point(self.x, self.y), self.radius)
+        elif particle.shape_type == "Rect":
+            self.shape = Rectangle(Point(self.x - self.width/2.0, self.y - self.height/2.0),
+                Point(self.x + self.width/2.0, self.y + self.height/2.0))
         else:
             assert(False)
 
-        self.shape.setFill(color)
-        self.shape.setOutline(color)
+        self.shape.setFill(self.color)
+        self.shape.setOutline(self.color)
 
     def draw(self):
         self.shape.draw(self.window)
 
     def render(self):
         self.shape.move(self.x - self.shape.getCenter().getX(), self.y - self.shape.getCenter().getY())
+
+class ParticleFactory:
+    def __init__(self, window, particles, particle_shapes):
+        self.window = window
+        self.particles = particles
+        self.particle_shapes = particle_shapes
+        self.count = 0
+
+    def create(self, **kwargs):
+        self.particles.append(Particle(self.count, self.window, **kwargs))
+        self.particle_shapes.append(ParticleShape(self.count, self.window, self.particles[self.count]))
+        self.count += 1
+        

@@ -104,10 +104,10 @@ class MainMenu:
         group_name = 'group' + str(len(d) + 1)
         group = { 
             group_name: {
-                'n': n,
+                'n': int(n),
                 'color': color,
-                'radius': r,
-                'mass': m,
+                'radius': float(r),
+                'mass': float(m),
                 'shape': 'Circle',
                 'width': float(self.input_r.getInput()) * 2,
                 'height': float(self.input_r.getInput()) * 2
@@ -120,4 +120,12 @@ class MainMenu:
         data = {'particles': { } }
         data.update( {'particles': kwargs} )
         return data
+
+    def pause(self):
+        message = Text(Point(self.window.width/2.0, self.window.height/2.0 - 50.0), 'Paused')
+        message.setSize(24)
+        message.draw(self.window)
+        while self.window.checkKey() != "space": # pause until user hits space again
+            pass
+        message.undraw()
     
