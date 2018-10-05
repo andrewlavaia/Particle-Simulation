@@ -65,8 +65,7 @@ class Particle:
 
     # equality comparator
     def __eq__(self, other):
-        return ((self.x, self.y, self.collisionCnt) ==
-                (other.x, other.y, other.collisionCnt))
+        return self.index == other.index
 
     # Moves particle by time * speed
     def move(self, dt):
@@ -139,9 +138,6 @@ class Particle:
     #  won't hit left or right edges of long rectangle because
     #  the angle calc tells it to use the vertical distance)
     def timeToHit(self, that):
-        if self == that:
-            return math.inf
-
         # distance
         dx = that.x - self.x # switch to distance between nearest points?
         dy = that.y - self.y
@@ -152,7 +148,7 @@ class Particle:
 
         # collision prediction
         dvdr = dx*dvx + dy*dvy
-        if dvdr > 0:
+        if dvdr >= 0:
             return math.inf
         dvdv = dvx*dvx + dvy*dvy
         drdr = dx*dx + dy*dy
@@ -344,4 +340,3 @@ class ParticleFactory:
         self.particles.append(Particle(self.count, self.window, **kwargs))
         self.particle_shapes.append(ParticleShape(self.count, self.window, self.particles[self.count]))
         self.count += 1
-        

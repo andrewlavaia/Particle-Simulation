@@ -1,5 +1,6 @@
 import unittest
 import math
+from queue import Queue
 from graphics import *
 from collision import *
 from particles import *
@@ -8,32 +9,36 @@ class TestIntegration(unittest.TestCase):
     def setUp(self):
         self.window = GraphWin('Test', 100, 100)
         self.particles = []
-        self.particles.append(Particle(self.window, x = 30.0, y = 5.0, vx = 10, vy = 0))
-        self.particles.append(Particle(self.window, x = 50.0, y = 5.0, vx = -10, vy = 0))
-        self.cs = CollisionSystem(self.particles)
+        self.particles.append(Particle(0, self.window, x = 30.0, y = 5.0, vx = 10, vy = 0))
+        self.particles.append(Particle(1, self.window, x = 50.0, y = 5.0, vx = -10, vy = 0))
+        self.result_q = Queue() 
 
-    def test_checkEvtsInPQ(self):        
-        for x in self.cs.pq:
-            self.assertTrue(x.isValid())
+    def test_checkEvtsInQ(self):
+        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.result_q)
+        while not self.result_q.empty():
+            evt = self.result_q.get()
+            self.assertTrue(evt.isValid(self.particles))
 
-    def test_checkPQlen(self):
-        self.cs.pq[0].a.bounceOff(self.cs.pq[0].b)
-        self.assertTrue(len(self.cs.pq) == 4) # 1 particle collision + 1 wall collisions each
+    def test_checkQlen(self):
+        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.result_q)
+        self.assertTrue(self.result_q.qsize() == 3) # 1 particle collision + 2 wall collisions
         
     def test_checkEvtsAfterBounce(self):
-        self.cs.pq[0].a.bounceOff(self.cs.pq[0].b)
-        self.assertFalse(self.cs.pq[0].isValid())
+        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.result_q)
+        evt = self.result_q.get()
+        self.particles[0].bounceOff(self.particles[1])
+        self.assertFalse(evt.isValid(self.particles))
 
 class TestParticle(unittest.TestCase):
     def setUp(self):
         self.window = GraphWin('Test', 200, 200)
-        self.a = Particle(self.window, x = 47.5, y = 5.0, vx = 10.0, vy = 0, radius = 5.0)
-        self.b = Particle(self.window, x = 50.0, y = 5.0, vx = -10.0, vy = 0, radius = 5.0)
-        self.c = Particle(self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
-        self.d = Particle(self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
-        self.e = Particle(self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
-        self.f = Particle(self.window, width = 20.0, height = 20.0, x = 160, y = 500, vx = 0, vy = 0, shape = "Rect")
-        self.g = Particle(self.window, width = 40.0, height = 20.0, x = 160, y = 700, vx = 0, vy = 0, shape = "Rect")
+        self.a = Particle(0, self.window, x = 47.5, y = 5.0, vx = 10.0, vy = 0, radius = 5.0)
+        self.b = Particle(1, self.window, x = 50.0, y = 5.0, vx = -10.0, vy = 0, radius = 5.0)
+        self.c = Particle(2, self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
+        self.d = Particle(3, self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
+        self.e = Particle(4, self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
+        self.f = Particle(5, self.window, width = 20.0, height = 20.0, x = 160, y = 500, vx = 0, vy = 0, shape = "Rect")
+        self.g = Particle(6, self.window, width = 40.0, height = 20.0, x = 160, y = 700, vx = 0, vy = 0, shape = "Rect")
 
     def test_bounceOff(self):
         avx = self.a.vx
@@ -72,8 +77,9 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(self.e.timeToHitVWall() == math.inf)
     
     def test_timeToHitHWall(self):
+        menu_height = 20.0
         topWallY = 0
-        botWallY = self.window.height
+        botWallY = self.window.height - menu_height
         self.assertTrue(self.a.timeToHitHWall() == math.inf)
         self.assertTrue(self.b.timeToHitHWall() == math.inf)
         self.assertTrue(self.c.timeToHitHWall() == math.inf)
@@ -84,7 +90,6 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(self.a.distFromCenter(0) == 5.0)
         self.assertTrue(self.a.distFromCenter(45) == 5.0)
 
-        
         self.assertTrue(round(self.f.distFromCenter(0), 2) == 10.0) # right
         self.assertTrue(round(self.f.distFromCenter(90), 2) == 10.0) # top
         self.assertTrue(round(self.f.distFromCenter(180), 2) == 10.0) # left
@@ -119,29 +124,28 @@ class TestParticle(unittest.TestCase):
 class TestCollisionSys(unittest.TestCase):
     def setUp(self):
         self.window = GraphWin('Test', 200, 200)
-        self.a = Particle(self.window, x = 25.5, y = 5.0, vx = 10.0, vy = 0)
-        self.b = Particle(self.window, x = 50.0, y = 5.0, vx = -10.0, vy = 0)
-        self.c = Particle(self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
-        self.d = Particle(self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
-        self.e = Particle(self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
-        particles = [self.a, self.b, self.c, self.d, self.e]
-        self.cs = CollisionSystem(particles)
+        self.a = Particle(0, self.window, x = 25.5, y = 5.0, vx = 10.0, vy = 0)
+        self.b = Particle(1, self.window, x = 50.0, y = 5.0, vx = -10.0, vy = 0)
+        self.c = Particle(2, self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
+        self.d = Particle(3, self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
+        self.e = Particle(4, self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
+        self.particles = [self.a, self.b, self.c, self.d, self.e]
+        self.result_q = Queue()
 
     def test_predict(self):
         # no particle
-        sz = len(self.cs.pq)
-        self.cs.predict(None, 0, 10000)
-        self.assertTrue(sz == len(self.cs.pq))
+        CollisionSystem.predict(None, 0, 10000, self.particles, self.result_q)
+        self.assertTrue(self.result_q.qsize() == 0)
 
         # no limit
-        sz = len(self.cs.pq)
-        self.cs.predict(self.a, 0, math.inf)
-        self.assertTrue(len(self.cs.pq) == (sz + 7)) # 2 wall collision + 5 other particles 
+        sz = self.result_q.qsize()
+        CollisionSystem.predict(self.a, 0, math.inf, self.particles, self.result_q)
+        self.assertTrue(self.result_q.qsize() == (sz + 6)) # 2 wall collisions + 4 other particles 
 
         # with limit
-        sz = len(self.cs.pq)
-        self.cs.predict(self.a, 0, 10000)
-        self.assertTrue(len(self.cs.pq) == (sz + 2)) # only two possible collisions (1 wall, 1 particle) 
+        sz = self.result_q.qsize()
+        CollisionSystem.predict(self.a, 0, 10000, self.particles, self.result_q)
+        self.assertTrue(self.result_q.qsize() == (sz + 2)) # only two possible collisions (1 wall, 1 particle) 
 
 if __name__ == '__main__':
     unittest.main()

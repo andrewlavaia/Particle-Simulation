@@ -46,6 +46,8 @@ class CollisionSystem:
         # particle as an event into the priority queue 
         # if collision time is between next_logic_tick and limit
         for b in particles:
+            if a == b:
+                continue
             dt = a.timeToHit(b)
             minTime = max(next_logic_tick - 1.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick
             evt = Event(minTime, a.index, b.index, a.collisionCnt, b.collisionCnt)
