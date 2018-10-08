@@ -5,6 +5,7 @@ different types of particles colliding
 with one another
 '''
 import time
+import sys
 import multiprocessing as mp
 
 from graphics import GraphWin
@@ -13,12 +14,9 @@ from particles import Particle, Immovable, RectParticle, Wall, ParticleShape, Pa
 from menu import MainMenu
 
 # import os
-# import sys
 # import pdb
 
 def main():
-    menu_options = {"New": main_menu.run, "Restart": main, "Exit": window.close}
-    window.addMenu(menu_options)
     window.setBackground('white')
     window.clear()
 
@@ -94,9 +92,19 @@ def main():
             lastFrameTime = time.time()
     window.close
 
+def cleanup():
+    window.close()
+    while not work_requested_q.empty():
+        work_requested_q.get_nowait()
+    while not work_completed_q.empty():
+        work_completed_q.get_nowait() 
+    sys.exit()   
+
 if __name__ == '__main__':
     window = GraphWin('Particle Simulation', 1024, 768, autoflush=False)
     main_menu = MainMenu(window, main)
+    menu_options = {"New": main_menu.run, "Restart": main, "Exit": cleanup}
+    window.addMenu(menu_options)
 
     # initialize multi-threading variables
     work_completed_q = mp.Queue()

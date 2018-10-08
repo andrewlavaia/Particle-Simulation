@@ -62,32 +62,15 @@ class MainMenu:
         while True:    
             last_clicked_pt = self.window.getMouse()
             if last_clicked_pt is not None:
-                if self.simulation_btn.clicked(last_clicked_pt):
-                    if (self.input_n.validateInput() and 
-                            self.input_color.validateInput() and 
-                            self.input_r.validateInput() and 
-                            self.input_m.validateInput()):
-                        
-                        self.group_data_dict = self.addGroupToDict(self.group_data_dict, 
-                                self.input_n.getInput(), self.input_color.getInput(), 
-                                self.input_r.getInput(), self.input_m.getInput())
+                if self.simulation_btn.clicked(last_clicked_pt) and self.validInputs():
+                    self.addGroupToDict()
+                    self.setConfigData()
+                    return self.callback()
 
-                        data = self.create_particle_data(**self.group_data_dict)
-                        file_utils.set_config(data) 
-                        self.config_flag = 0
+                elif self.add_group_btn.clicked(last_clicked_pt) and self.validInputs():
+                    self.addGroupToDict()
+                    self.group_data_text.setText('Extra Groups Added: ' + str(len(self.group_data_dict))) 
 
-                        return self.callback()
-                    else:
-                        print('invalid inputs')
-                elif self.add_group_btn.clicked(last_clicked_pt):
-                    if (self.input_n.validateInput() and 
-                            self.input_color.validateInput() and 
-                            self.input_r.validateInput() and 
-                            self.input_m.validateInput()):
-                        self.group_data_dict = self.addGroupToDict(self.group_data_dict, 
-                                self.input_n.getInput(), self.input_color.getInput(), 
-                                self.input_r.getInput(), self.input_m.getInput())
-                        self.group_data_text.setText('Extra Groups Added: ' + str(len(self.group_data_dict))) 
                 elif self.scenario_1_btn.clicked(last_clicked_pt):
                     self.config_flag = 1
                     return self.callback()
@@ -99,8 +82,19 @@ class MainMenu:
         elif self.config_flag == 0:
             config_data = file_utils.load_config('config.yml')
         return config_data
+    
+    def setConfigData(self):
+        data = self.create_particle_data(**self.group_data_dict)
+        file_utils.set_config(data) 
+        self.config_flag = 0
 
-    def addGroupToDict(self, d, n, color, r, m):
+    def addGroupToDict(self):
+        d = self.group_data_dict
+        n = self.input_n.getInput()
+        color = self.input_color.getInput()
+        r = self.input_r.getInput()
+        m = self.input_m.getInput()
+
         group_name = 'group' + str(len(d) + 1)
         group = { 
             group_name: {
@@ -114,7 +108,7 @@ class MainMenu:
             }
         }
         d.update(group)
-        return d
+        self.group_data_dict = d
 
     def create_particle_data(self, **kwargs):
         data = {'particles': { } }
@@ -128,4 +122,9 @@ class MainMenu:
         while self.window.checkKey() != "space": # pause until user hits space again
             pass
         message.undraw()
-    
+
+    def validInputs(self):
+       return self.input_n.validateInput() and \
+                self.input_color.validateInput() and \
+                self.input_r.validateInput() and \
+                self.input_m.validateInput()
