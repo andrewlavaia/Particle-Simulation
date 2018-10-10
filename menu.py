@@ -11,6 +11,7 @@ class MainMenu:
         self.window.clear()
         self.window.setBackground('white')
         self.group_data_dict = {}
+        self.group_cntr = 0
         
         custom_sim_header = Text(Point(350, 30), 'Custom Simulation')
         custom_sim_header.setSize(24)
@@ -35,7 +36,7 @@ class MainMenu:
         self.add_group_btn.activate() 
 
         self.table = Table(self.window, Point(350, 100))
-        self.table.addRow("group", "quantity", "color", "radius", "mass")
+        self.table.addRow("group id", "quantity", "color", "radius", "mass")
 
         # scenarios
         scenario_header = Text(Point(850, 30), 'Scenarios')
@@ -72,10 +73,10 @@ class MainMenu:
                     return self.callback()
 
                 else:
-                    for i in range(len(self.table.buttons)):
-                        if self.table.buttons[i].clicked(last_clicked_pt):
-                            self.table.deleteRow(i + 1) 
-    
+                    for button in self.table.buttons:
+                        if button[1].clicked(last_clicked_pt):
+                            self.deleteGroupFromDict(button[0]) 
+                        
     def getConfigData(self):
         config_data = {}
         if self.config_flag == 1:
@@ -96,7 +97,8 @@ class MainMenu:
         r = self.input_r.getInput()
         m = self.input_m.getInput()
 
-        group_name = 'group' + str(len(d) + 1)
+        self.group_cntr += 1
+        group_name = 'group' + str(self.group_cntr)
         group = { 
             group_name: {
                 'n': int(n),
@@ -110,7 +112,12 @@ class MainMenu:
         }
         d.update(group)
         self.group_data_dict = d
-        self.table.addRow(len(d), n, color, r, m)
+        self.table.addRow(self.group_cntr, n, color, r, m)
+
+    def deleteGroupFromDict(self, index):
+        key = "group" + str(index)
+        del self.group_data_dict[key]
+        self.table.deleteRow(index) 
 
     def create_particle_data(self, **kwargs):
         data = {'particles': { } }

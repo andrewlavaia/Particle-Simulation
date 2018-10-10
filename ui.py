@@ -191,16 +191,20 @@ class Table:
         self.rows.append(args)
         self.redraw()
 
-    def deleteRow(self, row_num):
-        del self.rows[row_num]
+    def deleteRow(self, row_id):
+        for row in self.rows:
+            if row[0] == row_id:
+                self.rows.remove(row)
         self.redraw()
 
     def clear(self):
         for label in self.labels:
             label.undraw()
         for button in self.buttons:
-            button.deactivate()
-            button.undraw()
+            button[1].deactivate()
+            button[1].undraw()
+        self.labels.clear()
+        self.buttons.clear()
 
     def draw(self):
         offset = Point(0, 0)
@@ -215,7 +219,7 @@ class Table:
                 offset.x = self.point.x + (len(self.rows[i]) * 70) - 30            
                 del_btn = Button(self.canvas, offset, 15, 15, '-')
                 del_btn.activate()
-                self.buttons.append(del_btn)
+                self.buttons.append((self.rows[i][0], del_btn))
 
     def redraw(self):
         self.clear()
