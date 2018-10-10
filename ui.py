@@ -85,10 +85,11 @@ class Button:
     and deactivate() methods. The clicked(p) method
     returns true if the button is active and p is inside it."""
 
-    def __init__(self, win, center, width, height, label):
+    def __init__(self, canvas, center, width, height, label):
         """ Creates a rectangular button, eg:
         qb = Button(myWin, Point(30,25), 20, 10, 'Quit') """ 
 
+        self.canvas = canvas
         w,h = width/2.0, height/2.0
         x,y = center.getX(), center.getY()
         self.xmax, self.xmin = x+w, x-w
@@ -97,9 +98,8 @@ class Button:
         p2 = Point(self.xmax, self.ymax)
         self.rect = Rectangle(p1,p2)
         self.rect.setFill('lightgray')
-        self.rect.draw(win)
         self.label = Text(center, label)
-        self.label.draw(win)
+        self.draw()
         self.deactivate()
 
     def clicked(self, p):
@@ -124,6 +124,13 @@ class Button:
         self.rect.setWidth(1)
         self.active = 0
 
+    def draw(self):
+        self.rect.draw(self.canvas)
+        self.label.draw(self.canvas)
+
+    def undraw(self):
+        self.rect.undraw()
+        self.label.undraw()
 
 class InputBox:
     def __init__(self, point, input_type, label_text, char_max = 10, default_val = None):
@@ -172,9 +179,46 @@ class InputBox:
     def getPointWithOffset(self):
         return Point(self.point.x, self.point.y + 50)
 
+class Table:
+    def __init__(self, canvas, point):
+        self.canvas = canvas
+        self.point = point
+        self.rows = []
+        self.labels = []
+        self.buttons = []
 
+    def addRow(self, *args):
+        self.rows.append(args)
+        self.redraw()
 
-        
+    def deleteRow(self, row_num):
+        del self.rows[row_num]
+        self.redraw()
 
+    def clear(self):
+        for label in self.labels:
+            label.undraw()
+        for button in self.buttons:
+            button.deactivate()
+            button.undraw()
+
+    def draw(self):
+        offset = Point(0, 0)
+        for i in range(len(self.rows)):
+            offset.y = self.point.y + (i * 30)
+            for j in range(len(self.rows[i])):
+                offset.x = self.point.x + (j * 70)
+                label = Text(offset, self.rows[i][j])
+                label.draw(self.canvas)
+                self.labels.append(label)
+            if i > 0: 
+                offset.x = self.point.x + (len(self.rows[i]) * 70) - 30            
+                del_btn = Button(self.canvas, offset, 15, 15, '-')
+                del_btn.activate()
+                self.buttons.append(del_btn)
+
+    def redraw(self):
+        self.clear()
+        self.draw()
 
 

@@ -10,17 +10,18 @@ class MainMenu:
     def loadMenu(self):
         self.window.clear()
         self.window.setBackground('white')
+        self.group_data_dict = {}
         
-        custom_sim_header = Text(Point(225, 30), 'Custom Simulation')
+        custom_sim_header = Text(Point(350, 30), 'Custom Simulation')
         custom_sim_header.setSize(24)
         custom_sim_header.setStyle('bold')
         custom_sim_header.draw(self.window)
 
-        self.input_n = InputBox(Point(self.window.width/2.0 - 250.0, self.window.height/2.0 - 200.0), 
+        self.input_n = InputBox(Point(100.0, 100.0), 
                 'unsigned_int', '# of particles: ', 4, 40)
         self.input_n.draw(self.window)
 
-        self.input_color = InputBox(self.input_n.getPointWithOffset(), 'color', 'color: ', 20, 'black')
+        self.input_color = InputBox(self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'black')
         self.input_color.draw(self.window)
 
         self.input_r = InputBox(self.input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
@@ -29,33 +30,29 @@ class MainMenu:
         self.input_m = InputBox(self.input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
         self.input_m.draw(self.window)
 
+        self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 
+                200, 30, 'Add Group')
+        self.add_group_btn.activate() 
+
+        self.table = Table(self.window, Point(350, 100))
+        self.table.addRow("group", "quantity", "color", "radius", "mass")
+
         # scenarios
-        scenario_header = Text(Point(650, 30), 'Scenarios')
+        scenario_header = Text(Point(850, 30), 'Scenarios')
         scenario_header.setSize(22)
         scenario_header.setStyle('bold')
         scenario_header.draw(self.window)
 
-        ln_1 = Line(Point(500, 0), Point(500, self.window.height))
+        ln_1 = Line(Point(700, 0), Point(700, self.window.height))
         ln_1.draw(self.window)
 
-        self.scenario_1_btn = Button(self.window, Point(650, 100), 
+        self.scenario_1_btn = Button(self.window, Point(850, 100), 
                 100, 50, 'Default')
-        self.scenario_1_btn.activate() 
+        self.scenario_1_btn.activate()    
 
-        self.add_group_btn = Button(self.window, Point(125, self.window.height/2.0 + 150), 
-                150, 75, 'Add Group')
-        self.add_group_btn.activate()    
-
-        self.simulation_btn = Button(self.window, Point(375, self.window.height/2.0 + 150.0), 
+        self.simulation_btn = Button(self.window, Point(350, 500.0), 
                 150, 75, 'Run Simulation')
         self.simulation_btn.activate()
-
-        self.group_data_dict = {}
-
-        self.group_data_text = Text(Point(100, 620), 'Extra Groups Added: ' + str(len(self.group_data_dict)))
-        self.group_data_text.setSize(12)
-        self.group_data_text.setStyle('italic')
-        self.group_data_text.draw(self.window)
 
     def run(self):
         self.loadMenu()
@@ -69,11 +66,15 @@ class MainMenu:
 
                 elif self.add_group_btn.clicked(last_clicked_pt) and self.validInputs():
                     self.addGroupToDict()
-                    self.group_data_text.setText('Extra Groups Added: ' + str(len(self.group_data_dict))) 
 
                 elif self.scenario_1_btn.clicked(last_clicked_pt):
                     self.config_flag = 1
                     return self.callback()
+
+                else:
+                    for i in range(len(self.table.buttons)):
+                        if self.table.buttons[i].clicked(last_clicked_pt):
+                            self.table.deleteRow(i + 1) 
     
     def getConfigData(self):
         config_data = {}
@@ -109,6 +110,7 @@ class MainMenu:
         }
         d.update(group)
         self.group_data_dict = d
+        self.table.addRow(len(d), n, color, r, m)
 
     def create_particle_data(self, **kwargs):
         data = {'particles': { } }
