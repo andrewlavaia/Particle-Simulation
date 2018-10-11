@@ -18,25 +18,26 @@ class MainMenu:
         custom_sim_header.setStyle('bold')
         custom_sim_header.draw(self.window)
 
-        self.input_n = InputBox(Point(100.0, 100.0), 
+        self.input_n = InputBox(self.window, Point(100.0, 100.0), 
                 'unsigned_int', '# of particles: ', 4, 40)
-        self.input_n.draw(self.window)
+        self.input_n.draw()
 
-        self.input_color = InputBox(self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'black')
-        self.input_color.draw(self.window)
+        self.input_color = InputBox(self.window, self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'black')
+        self.input_color.draw()
 
-        self.input_r = InputBox(self.input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
-        self.input_r.draw(self.window)
+        self.input_r = InputBox(self.window, self.input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
+        self.input_r.draw()
 
-        self.input_m = InputBox(self.input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
-        self.input_m.draw(self.window)
+        self.input_m = InputBox(self.window, self.input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
+        self.input_m.draw()
 
         self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 
                 200, 30, 'Add Group')
         self.add_group_btn.activate() 
 
         self.table = Table(self.window, Point(350, 100))
-        self.table.addRow("group id", "quantity", "color", "radius", "mass")
+        self.table.addRow("id", "quantity", "color", "radius", "mass")
+        self.addGroupToDict()
 
         # scenarios
         scenario_header = Text(Point(850, 30), 'Scenarios')
@@ -61,7 +62,6 @@ class MainMenu:
             last_clicked_pt = self.window.getMouse()
             if last_clicked_pt is not None:
                 if self.simulation_btn.clicked(last_clicked_pt) and self.validInputs():
-                    self.addGroupToDict()
                     self.setConfigData()
                     return self.callback()
 
@@ -73,9 +73,9 @@ class MainMenu:
                     return self.callback()
 
                 else:
-                    for button in self.table.buttons:
-                        if button[1].clicked(last_clicked_pt):
-                            self.deleteGroupFromDict(button[0]) 
+                    for row in self.table.rows:
+                        if row.button and row.button.clicked(last_clicked_pt):
+                            self.deleteGroupFromDict(row.values[0]) 
                         
     def getConfigData(self):
         config_data = {}
