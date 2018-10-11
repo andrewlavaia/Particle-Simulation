@@ -33,7 +33,7 @@ class Button(UIBase):
         self.rect.setFill('lightgray')
         self.label = Text(center, label)
         self.draw()
-        self.deactivate()
+        self.activate()
 
     def clicked(self, p):
         """ RETURNS true if button active and p is inside"""
@@ -79,6 +79,8 @@ class InputBox(UIBase):
         self.entry = Entry(Point(point.x + x_offset, point.y), char_max)
         if default_val is not None:
             self.setInput(default_val)
+        
+        self.draw()
 
     def getInput(self):
         return self.entry.getText()
@@ -171,3 +173,17 @@ class TableRow:
         self.labels.clear()
         self.button = None
 
+class HeaderText(UIBase):
+    def __init__(self, canvas, point, text):
+        self.canvas = canvas
+        self.text = Text(point, text)
+        self.text.setSize(24)
+        self.text.setStyle('bold')
+        
+        self.draw()
+
+    def draw(self):
+        self.text.draw(self.canvas)
+
+    def undraw(self):
+        self.text.undraw()

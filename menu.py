@@ -13,48 +13,28 @@ class MainMenu:
         self.group_data_dict = {}
         self.group_cntr = 0
         
-        custom_sim_header = Text(Point(350, 30), 'Custom Simulation')
-        custom_sim_header.setSize(24)
-        custom_sim_header.setStyle('bold')
-        custom_sim_header.draw(self.window)
+        custom_sim_header = HeaderText(self.window, Point(350, 30), 'Custom Simulation')
 
-        self.input_n = InputBox(self.window, Point(100.0, 100.0), 
-                'unsigned_int', '# of particles: ', 4, 40)
-        self.input_n.draw()
-
+        self.input_n = InputBox(self.window, Point(100.0, 100.0), 'unsigned_int', '# of particles: ', 4, 40)
         self.input_color = InputBox(self.window, self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'black')
-        self.input_color.draw()
-
         self.input_r = InputBox(self.window, self.input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
-        self.input_r.draw()
-
         self.input_m = InputBox(self.window, self.input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
-        self.input_m.draw()
-
-        self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 
-                200, 30, 'Add Group')
-        self.add_group_btn.activate() 
-
+        self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 200, 30, 'Add Group')
         self.table = Table(self.window, Point(350, 100))
         self.table.addRow("id", "quantity", "color", "radius", "mass")
-        self.addGroupToDict()
+        self.group_data_dict = self.getConfigData()['particles']
 
-        # scenarios
-        scenario_header = Text(Point(850, 30), 'Scenarios')
-        scenario_header.setSize(22)
-        scenario_header.setStyle('bold')
-        scenario_header.draw(self.window)
+        for group in self.group_data_dict.values():
+            self.group_cntr += 1
+            self.table.addRow(self.group_cntr, group['n'], group['color'], group['radius'], group['mass'])
 
         ln_1 = Line(Point(700, 0), Point(700, self.window.height))
         ln_1.draw(self.window)
 
-        self.scenario_1_btn = Button(self.window, Point(850, 100), 
-                100, 50, 'Default')
-        self.scenario_1_btn.activate()    
+        scenario_header = HeaderText(self.window, Point(850, 30), 'Scenarios')
+        self.scenario_1_btn = Button(self.window, Point(850, 100), 100, 50, 'Default')
 
-        self.simulation_btn = Button(self.window, Point(350, 500.0), 
-                150, 75, 'Run Simulation')
-        self.simulation_btn.activate()
+        self.simulation_btn = Button(self.window, Point(350, 500.0), 150, 75, 'Run Simulation')
 
     def run(self):
         self.loadMenu()
