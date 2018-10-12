@@ -13,15 +13,8 @@ class UIBase(metaclass = ABCMeta):
         """Removes object from self.canvas"""
 
 class Button(UIBase):
-    """A button is a labeled rectangle in a window.
-    It is activated or deactivated with the activate()
-    and deactivate() methods. The clicked(p) method
-    returns true if the button is active and p is inside it."""
-
     def __init__(self, canvas, center, width, height, label):
-        """ Creates a rectangular button, eg:
-        qb = Button(myWin, Point(30,25), 20, 10, 'Quit') """ 
-
+        """ Creates a rectangular button """
         self.canvas = canvas
         w,h = width/2.0, height/2.0
         x,y = center.getX(), center.getY()
@@ -42,17 +35,14 @@ class Button(UIBase):
                self.ymin <= p.getY() <= self.ymax
 
     def getLabel(self):
-        """RETURNS the label string of this button."""
         return self.label.getText()
 
     def activate(self):
-        """Sets this button to 'active'."""
         self.label.setFill('black')
         self.rect.setWidth(2)
         self.active = 1
 
     def deactivate(self):
-        """Sets this button to 'inactive'."""
         self.label.setFill('darkgrey')
         self.rect.setWidth(1)
         self.active = 0
@@ -125,7 +115,7 @@ class Table(UIBase):
         self.rows = []
 
     def addRow(self, *args):
-        row = TableRow(args)
+        row = TableRow(self.canvas, args)
         self.rows.append(row)
         self.redraw()
 
@@ -144,11 +134,10 @@ class Table(UIBase):
             for j in range(len(row.values)):
                 offset.x = self.point.x + (j * 70)
                 row.labels.append(Text(offset, row.values[j]))
-                row.labels[j].draw(self.canvas)
             if i > 0: 
                 offset.x = self.point.x + (len(row.values) * 70) - 30            
                 row.button = Button(self.canvas, offset, 15, 15, '-')
-                row.button.activate()
+            row.draw()
 
     def undraw(self):
         for row in self.rows:
@@ -158,11 +147,16 @@ class Table(UIBase):
         self.undraw()
         self.draw()
 
-class TableRow:
-    def __init__(self, *args):
+class TableRow(UIBase):
+    def __init__(self, canvas, *args):
+        self.canvas = canvas
         self.values = list(*args)
         self.labels = []
         self.button = None
+
+    def draw(self):
+        for label in self.labels:
+            label.draw(self.canvas)
         
     def undraw(self):
         for label in self.labels:

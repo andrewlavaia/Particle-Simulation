@@ -24,9 +24,10 @@ class MainMenu:
         self.table.addRow("id", "quantity", "color", "radius", "mass")
         self.group_data_dict = self.getConfigData()['particles']
 
-        for group in self.group_data_dict.values():
-            self.group_cntr += 1
-            self.table.addRow(self.group_cntr, group['n'], group['color'], group['radius'], group['mass'])
+        for group_name, group in self.group_data_dict.items():
+            group_id = int(group_name[5:])
+            self.group_cntr = group_id if group_id > self.group_cntr else self.group_cntr
+            self.table.addRow(group_id, group['n'], group['color'], group['radius'], group['mass'])
 
         ln_1 = Line(Point(700, 0), Point(700, self.window.height))
         ln_1.draw(self.window)
