@@ -167,22 +167,22 @@ class Particle:
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
     # calculates time (in ms) until collision with horizontal wall
-    def timeToHitHWall(self):
+    def timeToHitHWall(self, wall):
         menu_height = 20.0
-        if self.vy > 0:
-            return (self.window_height - self.height/2 - self.y - menu_height) / self.vy
-        elif (self.vy < 0):
-            return (0.0 + self.height/2 - self.y) / self.vy
-        elif (self.vy == 0):
+        if self.y < wall.y and self.vy > 0:
+            return (wall.y - self.height/2 - self.y) / self.vy
+        elif self.y > wall.y and self.vy < 0:
+            return (wall.y + self.height/2 - self.y) / self.vy
+        else:
             return math.inf
 
     # calculates time (in ms) until collision with vertical wall
-    def timeToHitVWall(self):
-        if (self.vx > 0):
-            return (self.window_width - self.width/2 - self.x) / self.vx
-        elif (self.vx < 0):
-            return (0.0 + self.width/2 - self.x) / self.vx
-        elif (self.vx == 0):
+    def timeToHitVWall(self, wall):
+        if self.x < wall.x and self.vx > 0:
+            return (wall.x - self.width/2 - self.x) / self.vx
+        elif self.x > wall.x and self.vx < 0:
+            return (wall.x + self.width/2 - self.x) / self.vx
+        else:
             return math.inf
 
     #  adjusts velocity vector given a force from collision
@@ -270,34 +270,15 @@ class RectParticle(Particle):
         super().__init__(window, radius, x, y, vx, vy, mass, color,
             shape = "Rect", width = width, height = height)
 
-class Wall(Particle):
-    def __init__(self, window,
-        radius = None, x = None, y = None, color = None):
+class VWall:
+    def __init__(self, x):
+        self.type = "VWall"
+        self.x = x
 
-        super().__init__(window, 1.0, x, y, 0.0, 0.0, 1.0, color, shape = "Rect")
-
-    # let other particles calculate time to hit
-    def timeToHit(self, that):
-        return math.inf
-    def timeToHitVWall(self):
-        return math.inf
-    def timeToHitHWall(self):
-        return math.inf
-
-    # double force for "that" particle
-    # needed otherwise collisions with this particle lose energy
-    def moveByForce(self, that, fx, fy):
-        that.vx = that.vx - (fx / self.mass)
-        that.vy = that.vy - (fy / self.mass)
-        self.collisionCnt = self.collisionCnt + 1
-
-    def bounceOff(self, that):
-        pass
-    def bounceOffVWall(self):
-        pass
-    def bounceOffHWall(self):
-        pass
-
+class HWall:    
+    def __init__(self, y):
+        self.type = "HWall"
+        self.y = y
 
 # Defines a shape object to be used for drawing the 
 # corresponding Particle object with the same index

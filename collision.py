@@ -38,7 +38,7 @@ class Event:
 # Collision System is used to predict when and how particles will collide
 class CollisionSystem:
     # Inserts all predicted collisions with a given particle as Events into the queue.
-    def predict(a, next_logic_tick, limit, particles, result_q):
+    def predict(a, next_logic_tick, limit, particles, walls, result_q):
         if a is None:
             return
         
@@ -56,14 +56,17 @@ class CollisionSystem:
                 result_q.put(evt)
         
         # insert collision time with every wall into the queue
-        dt = a.timeToHitVWall()
-        evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
-        if next_logic_tick + dt <= limit:
-            result_q.put(evt)
-        dt = a.timeToHitHWall()
-        evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
-        if next_logic_tick + dt <= limit:   
-            result_q.put(evt)
+        for wall in walls:
+            if (wall.type == "VWall"):
+                dt = a.timeToHitVWall(wall)
+                evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
+                if next_logic_tick + dt <= limit:
+                    result_q.put(evt)
+            else:
+                dt = a.timeToHitHWall(wall)
+                evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
+                if next_logic_tick + dt <= limit:   
+                    result_q.put(evt)
 
     def processCompletedWork(result_q, pq):
         while not result_q.empty():
@@ -74,10 +77,10 @@ class CollisionSystem:
         print("{0} started".format(mp.current_process().name))
         while True:
             work = work_q.get() # blocks automatically when q is empty
-            print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
-            CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, result_q)
+            # print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
+            CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, work.walls, result_q)
 
-    def processCollisionEvents(particles, pq, nextLogicTick, work_q, result_q):  
+    def processCollisionEvents(particles, walls, pq, nextLogicTick, work_q, result_q):  
         lastEvt = None
         while len(pq) > 0 and pq[0].time < nextLogicTick:
             evt = heapq.heappop(pq)
@@ -91,13 +94,11 @@ class CollisionSystem:
             b = evt.b
             if a is not None and b is not None:
                 particles[a].bounceOff(particles[b])
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles))
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles))
+                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))
             elif a is not None and b is None:
                 particles[a].bounceOffVWall()
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles))
+                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
             elif a is None and b is not None:
                 particles[b].bounceOffHWall()
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles))
-
-
+                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))

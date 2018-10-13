@@ -106,7 +106,7 @@ class InputBox(UIBase):
         self.entry.undraw()        
 
     def getPointWithOffset(self):
-        return Point(self.point.x, self.point.y + 50)
+        return Point(self.point.x, self.point.y + 30)
 
 class Table(UIBase):
     def __init__(self, canvas, point):

@@ -10,7 +10,7 @@ import multiprocessing as mp
 
 from graphics import GraphWin
 from collision import CollisionSystem 
-from particles import Particle, Immovable, RectParticle, Wall, ParticleShape, ParticleFactory
+from particles import Particle, ParticleShape, ParticleFactory, VWall, HWall
 from menu import MainMenu
 
 # import os
@@ -31,6 +31,7 @@ def main():
     particles = []
     particle_shapes = []
     pf = ParticleFactory(window, particles, particle_shapes)
+    walls = []
 
     # create particles from config file
     dataMap = main_menu.getConfigData()
@@ -42,9 +43,14 @@ def main():
 
     for particle_shape in particle_shapes:
         particle_shape.draw()
-    
+
+    walls.append(VWall(0.0))
+    walls.append(VWall(window.width))
+    walls.append(HWall(0.0))
+    walls.append(HWall(window.height - 20.0))
+
     for particle in particles:
-        CollisionSystem.predict(particle, 0.0, 10000, particles, work_completed_q)
+        CollisionSystem.predict(particle, 0.0, 10000, particles, walls, work_completed_q)
     while not work_requested_q.empty():
         pass
 
@@ -66,7 +72,7 @@ def main():
 
         if simTime > nextLogicTick:
             CollisionSystem.processCompletedWork(work_completed_q, pq)
-            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick, work_requested_q, work_completed_q)
+            CollisionSystem.processCollisionEvents(particles, walls, pq, nextLogicTick, work_requested_q, work_completed_q)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
@@ -81,11 +87,6 @@ def main():
                 particle_shape.x = particles[particle_shape.index].x
                 particle_shape.y = particles[particle_shape.index].y
                 particle_shape.render()  
-
-        # check if user wants to end simulation
-        if window.checkMouse() is not None:
-            pass
-            # window.close()
 
         if window.checkKey() == "space":
             main_menu.pause()
