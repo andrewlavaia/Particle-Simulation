@@ -168,7 +168,6 @@ class Particle:
 
     # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self, wall):
-        menu_height = 20.0
         if self.y < wall.y and self.vy > 0:
             return (wall.y - self.height/2 - self.y) / self.vy
         elif self.y > wall.y and self.vy < 0:
@@ -184,6 +183,21 @@ class Particle:
             return (wall.x + self.width/2 - self.x) / self.vx
         else:
             return math.inf
+
+    def timeToHitLineSegment(self, line):
+        scalar_factor = 1000
+        p0 = Point(self.x, self.y)
+        p1 = Point(
+            self.x + (scalar_factor * self.vx),
+            self.y + (scalar_factor * self.vy)
+        )
+        p_vector = LineSegment(p0, p1)
+
+        collision_point = p_vector.intersection(line)
+        if collision_point == None:
+            return math.inf
+
+        # !!! calculate time to hit collision point 
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):
@@ -321,3 +335,31 @@ class ParticleFactory:
         self.particles.append(Particle(self.count, self.window, **kwargs))
         self.particle_shapes.append(ParticleShape(self.count, self.window, self.particles[self.count]))
         self.count += 1
+
+
+class LineSegment:
+    def __init__(self, point_0, point_1):
+        self.p0 = point_0
+        self.p1 = point_1
+
+    def intersection(self, line):
+        p0 = self.p0
+        p1 = self.p1
+        q0 = line.p0
+        q1 = line.p1
+        s0 = Point(p1.x - p0.x, p1.y - p0.y)
+        s1 = Point(q1.x - q0.x, q1.y - q0.y)
+
+        try:
+            s = (-s0.y * (p0.x - q0.x) + s0.x * (p0.y - q0.y)) / (-s1.x * s0.y + s0.x * s1.y)
+            t = ( s1.x * (p0.y - q0.y) - s1.y * (p0.x - q0.x)) / (-s1.x * s0.y + s0.x * s1.y)            
+
+        except ZeroDivisionError:
+            # lines overlap so multiple collision points exist
+            return None
+
+        if s >= 0 and s <= 1 and t >= 0 and t <= 1:
+            collision_point = Point(p0.x + (t * s0.x), p0.y + (t * s0.y))
+            return collision_point
+        
+        return None

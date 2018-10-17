@@ -130,6 +130,43 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(self.a.calcAngle(-10, 10) == 135) # bot right 
         self.assertTrue(self.a.calcAngle(10, 10) + 180 == self.a.calcAngle(-10, -10))
 
+    def test_line_intersection(self):
+        p0 = Point(0.0, 0.0)
+        p1 = Point(5.0, 0.0)
+        p2 = Point(3.0, 3.0)
+        p3 = Point(3.0, -3.0)
+        p4 = Point(10.0, 0.0)
+        p5 = Point(6.0, 0.0)
+        p6 = Point(8.0, 0.0)
+        line1 = LineSegment(p0, p1)
+        line2 = LineSegment(p2, p3)
+        line3 = LineSegment(p1, p0)
+        line4 = LineSegment(p1, p4)
+        line5 = LineSegment(p1, p5)
+        line6 = LineSegment(p5, p6)
+
+        # intersection, associative, commutative
+        cp1 = line1.intersection(line2)
+        cp2 = line2.intersection(line1)
+        cp3 = line3.intersection(line2)
+        cp4 = line2.intersection(line3)
+        self.assertTrue(
+            cp1.x == 3 and cp1.y == 0 
+            and cp2.x == 3 and cp2.y == 0
+            and cp3.x == 3 and cp3.y == 0
+            and cp4.x == 3 and cp4.y == 0
+        )
+
+        # non-intersecting lines
+        cp5 = line4.intersection(line2)
+        self.assertTrue(cp5 == None)
+
+        # overlapping lines 
+        cp6 = line4.intersection(line5)
+        cp7 = line5.intersection(line6)
+        cp8 = line1.intersection(line4)
+        self.assertTrue(cp6 == None and cp7 == None and cp8 == None)
+
 class TestCollisionSys(unittest.TestCase):
     def setUp(self):
         self.window = GraphWin('Test', 200, 200)
