@@ -11,20 +11,25 @@ class TestIntegration(unittest.TestCase):
         self.particles = []
         self.particles.append(Particle(0, self.window, x = 30.0, y = 5.0, vx = 10, vy = 0))
         self.particles.append(Particle(1, self.window, x = 50.0, y = 5.0, vx = -10, vy = 0))
+        self.walls = []
+        self.walls.append(VWall(0))
+        self.walls.append(VWall(self.window.width))
+        self.walls.append(HWall(0))
+        self.walls.append(HWall(self.window.height - 20.0))
         self.result_q = Queue() 
 
     def test_checkEvtsInQ(self):
-        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.result_q)
+        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.walls, self.result_q)
         while not self.result_q.empty():
             evt = self.result_q.get()
             self.assertTrue(evt.isValid(self.particles))
 
     def test_checkQlen(self):
-        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.result_q)
-        self.assertTrue(self.result_q.qsize() == 3) # 1 particle collision + 2 wall collisions
+        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.walls, self.result_q)
+        self.assertTrue(self.result_q.qsize() == 5) # 1 particle collision + 4 wall collisions
         
     def test_checkEvtsAfterBounce(self):
-        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.result_q)
+        CollisionSystem.predict(self.particles[0], 0, math.inf, self.particles, self.walls, self.result_q)
         evt = self.result_q.get()
         self.particles[0].bounceOff(self.particles[1])
         self.assertFalse(evt.isValid(self.particles))
@@ -68,23 +73,27 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(self.a.timeToHit(self.e) == math.inf)
 
     def test_timeToHitVWall(self):
+        wall1 = VWall(0)
+        wall2 = VWall(self.window.width)
         leftWallX = 0
         rightWallX = self.window.width
-        self.assertTrue(self.a.timeToHitVWall() == (rightWallX - 5 - 47.5)/10.0)
-        self.assertTrue(self.b.timeToHitVWall() == (leftWallX + 5 - 50.0)/-10.0)
-        self.assertTrue(self.c.timeToHitVWall() == math.inf)
-        self.assertTrue(self.d.timeToHitVWall() == math.inf)
-        self.assertTrue(self.e.timeToHitVWall() == math.inf)
+        self.assertTrue(self.a.timeToHitVWall(wall2) == (rightWallX - 5 - 47.5)/10.0)
+        self.assertTrue(self.b.timeToHitVWall(wall1) == (leftWallX + 5 - 50.0)/-10.0)
+        self.assertTrue(self.c.timeToHitVWall(wall2) == math.inf)
+        self.assertTrue(self.d.timeToHitVWall(wall2) == math.inf)
+        self.assertTrue(self.e.timeToHitVWall(wall2) == math.inf)
     
     def test_timeToHitHWall(self):
         menu_height = 20.0
+        wall1 = HWall(0)
+        wall2 = HWall(self.window.height - menu_height)
         topWallY = 0
         botWallY = self.window.height - menu_height
-        self.assertTrue(self.a.timeToHitHWall() == math.inf)
-        self.assertTrue(self.b.timeToHitHWall() == math.inf)
-        self.assertTrue(self.c.timeToHitHWall() == math.inf)
-        self.assertTrue(self.d.timeToHitHWall() == (botWallY - 5 - 75)/10.0)
-        self.assertTrue(self.e.timeToHitHWall() == (topWallY + 5 - 500)/-10.0)
+        self.assertTrue(self.a.timeToHitHWall(wall1) == math.inf)
+        self.assertTrue(self.b.timeToHitHWall(wall1) == math.inf)
+        self.assertTrue(self.c.timeToHitHWall(wall1) == math.inf)
+        self.assertTrue(self.d.timeToHitHWall(wall2) == (botWallY - 5 - 75)/10.0)
+        self.assertTrue(self.e.timeToHitHWall(wall1) == (topWallY + 5 - 500)/-10.0)
 
     def test_distFromCenter(self):
         self.assertTrue(self.a.distFromCenter(0) == 5.0)
@@ -130,21 +139,26 @@ class TestCollisionSys(unittest.TestCase):
         self.d = Particle(3, self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
         self.e = Particle(4, self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
         self.particles = [self.a, self.b, self.c, self.d, self.e]
+        self.walls = []
+        self.walls.append(VWall(0))
+        self.walls.append(VWall(self.window.width))
+        self.walls.append(HWall(0))
+        self.walls.append(HWall(self.window.height - 20.0))
         self.result_q = Queue()
 
     def test_predict(self):
         # no particle
-        CollisionSystem.predict(None, 0, 10000, self.particles, self.result_q)
+        CollisionSystem.predict(None, 0, 10000, self.particles, self.walls, self.result_q)
         self.assertTrue(self.result_q.qsize() == 0)
 
         # no limit
         sz = self.result_q.qsize()
-        CollisionSystem.predict(self.a, 0, math.inf, self.particles, self.result_q)
-        self.assertTrue(self.result_q.qsize() == (sz + 6)) # 2 wall collisions + 4 other particles 
+        CollisionSystem.predict(self.a, 0, math.inf, self.particles, self.walls, self.result_q)
+        self.assertTrue(self.result_q.qsize() == (sz + 8)) # 4 wall collisions + 4 other particles 
 
         # with limit
         sz = self.result_q.qsize()
-        CollisionSystem.predict(self.a, 0, 10000, self.particles, self.result_q)
+        CollisionSystem.predict(self.a, 0, 10000, self.particles, self.walls, self.result_q)
         self.assertTrue(self.result_q.qsize() == (sz + 2)) # only two possible collisions (1 wall, 1 particle) 
 
 if __name__ == '__main__':

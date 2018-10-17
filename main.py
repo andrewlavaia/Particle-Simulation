@@ -8,7 +8,7 @@ import time
 import sys
 import multiprocessing as mp
 
-from graphics import GraphWin
+from graphics import GraphWin, Point, Line
 from collision import CollisionSystem 
 from particles import Particle, ParticleShape, ParticleFactory, VWall, HWall
 from menu import MainMenu
@@ -44,10 +44,18 @@ def main():
     for particle_shape in particle_shapes:
         particle_shape.draw()
 
+    menu_height = 20.0
     walls.append(VWall(0.0))
     walls.append(VWall(window.width))
     walls.append(HWall(0.0))
-    walls.append(HWall(window.height - 20.0))
+    walls.append(HWall(window.height - menu_height))
+
+    for wall in walls:
+        if wall.type == "VWall":
+            ln = Line(Point(wall.x, 0), Point(wall.x, window.height))
+        else:
+            ln = Line(Point(0, wall.y), Point(window.width, wall.y))   
+            ln.draw(window)
 
     for particle in particles:
         CollisionSystem.predict(particle, 0.0, 10000, particles, walls, work_completed_q)
