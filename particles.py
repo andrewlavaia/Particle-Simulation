@@ -185,28 +185,58 @@ class Particle:
             return math.inf
 
     def timeToHitLineSegment(self, line):
-        # starting point is particle center adjusted by radius 
+        # need to calculate two extra projected lines to represent full width of circle
+        # starting points are the particle center adjusted by radius and angle of travelling path
         deg = self.calcAngle(self.vy, self.vx)
-        adj = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
-        p0 = Point(self.x + adj.x, self.y + adj.y) 
+        adj0 = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
+        adj1 = Point(self.radius * math.sin(math.radians(deg + 90.0)), self.radius * math.cos(math.radians(deg + 90.0)))
+        adj2 = Point(self.radius * math.sin(math.radians(deg - 90.0)), self.radius * math.cos(math.radians(deg - 90.0)))
+        p0 = Point(self.x + adj0.x, self.y + adj0.y) 
+        p1 = Point(self.x + adj1.x, self.y + adj1.y) 
+        p2 = Point(self.x + adj2.x, self.y + adj2.y) 
 
         scalar_factor = 1000.0
-        p1 = Point(
-            self.x + (scalar_factor * self.vx),
-            self.y + (scalar_factor * self.vy)
+        q0 = Point(
+            self.x + adj0.x + (scalar_factor * self.vx),
+            self.y + adj0.y + (scalar_factor * self.vy)
         )
-        projected_path = LineSegment(p0, p1)
+        q1 = Point(
+            self.x + adj1.x + (scalar_factor * self.vx),
+            self.y + adj1.y + (scalar_factor * self.vy)
+        )
+        q2 = Point(
+            self.x + adj2.x + (scalar_factor * self.vx),
+            self.y + adj2.y + (scalar_factor * self.vy)
+        )
 
-        collision_point = projected_path.intersection(line)
-        if collision_point == None:
-            return math.inf
+        projected_path0 = LineSegment(p0, q0)
+        collision_point0 = projected_path0.intersection(line)
 
+        if collision_point0 is not None:
+            collision_point = collision_point0
+            p = Point(p0.x, p0.y)
+        else:
+            # test full width of circle for edge cases
+            projected_path1 = LineSegment(p1, q1)
+            projected_path2 = LineSegment(p2, q2)
+            collision_point1 = projected_path1.intersection(line)
+            collision_point2 = projected_path2.intersection(line)
+            if collision_point1 == None and collision_point2 == None:
+                return math.inf
+            elif collision_point1 is not None:
+                collision_point = collision_point1
+                p = Point(p1.x, p1.y)
+
+            else:
+                collision_point = collision_point2
+                p = Point(p2.x, p2.y)
+                
         # collision_point is on projected_path so dx/vx = dy/vy
         if self.vx != 0.0:
-            dx = collision_point.x - p0.x
+            dx = collision_point.x - p.x
             time = dx / self.vx
         elif self.vy != 0.0:
-            dy = collision_point.y - p0.y
+            dy = collision_point.y - p.y
             time = dy / self.vy
         else:
             time = math.inf

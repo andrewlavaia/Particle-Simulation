@@ -122,22 +122,22 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(self.d.timeToHitLineSegment(line4) == (botWallY - 5 - 75)/10.0)
         self.assertTrue(self.e.timeToHitLineSegment(line3) == (topWallY + 5 - 500)/-10.0)
 
-        # vertical line
+        # vertical line segment
         p1 = Particle(0, self.window, x = 45.0, y = 10.0, vx = 10.0, vy = 0, radius = 5.0)
-        p2 = Particle(0, self.window, x = 45.0, y = 19.0, vx = 10.0, vy = 0, radius = 5.0)
+        p2 = Particle(0, self.window, x = 45.0, y = 15.0, vx = 10.0, vy = 0, radius = 5.0)
         p3 = Particle(0, self.window, x = 45.0, y = 20.0, vx = 10.0, vy = 0, radius = 5.0)
         p4 = Particle(0, self.window, x = 45.0, y = 30.0, vx = 10.0, vy = 0, radius = 5.0)
         p5 = Particle(0, self.window, x = 45.0, y = 40.0, vx = 10.0, vy = 0, radius = 5.0)
-        p6 = Particle(0, self.window, x = 45.0, y = 41.0, vx = 10.0, vy = 0, radius = 5.0)
+        p6 = Particle(0, self.window, x = 45.0, y = 45.0, vx = 10.0, vy = 0, radius = 5.0)
         p7 = Particle(0, self.window, x = 45.0, y = 50.0, vx = 10.0, vy = 0, radius = 5.0)
 
         line5 = LineSegment(Point(60.0, 20.0), Point(60.0, 40.0))
         self.assertTrue(p1.timeToHitLineSegment(line5) == math.inf)
-        self.assertTrue(p2.timeToHitLineSegment(line5) == math.inf) # this should still hit edge of circle...
+        self.assertTrue(p2.timeToHitLineSegment(line5) == 15.0/10.0) 
         self.assertTrue(p3.timeToHitLineSegment(line5) == (15.0 - 5.0)/10.0)
         self.assertTrue(p4.timeToHitLineSegment(line5) == (15.0 - 5.0)/10.0)
         self.assertTrue(p5.timeToHitLineSegment(line5) == (15.0 - 5.0)/10.0)
-        self.assertTrue(p6.timeToHitLineSegment(line5) == math.inf) # this should still hit edge of circle...
+        self.assertTrue(p6.timeToHitLineSegment(line5) == 15.0/10.0) 
         self.assertTrue(p7.timeToHitLineSegment(line5) == math.inf)
 
     def test_distFromCenter(self):
