@@ -185,19 +185,33 @@ class Particle:
             return math.inf
 
     def timeToHitLineSegment(self, line):
-        scalar_factor = 1000
-        p0 = Point(self.x, self.y)
+        # starting point is particle center adjusted by radius 
+        deg = self.calcAngle(self.vy, self.vx)
+        adj = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
+        p0 = Point(self.x + adj.x, self.y + adj.y) 
+
+        scalar_factor = 1000.0
         p1 = Point(
             self.x + (scalar_factor * self.vx),
             self.y + (scalar_factor * self.vy)
         )
-        p_vector = LineSegment(p0, p1)
+        projected_path = LineSegment(p0, p1)
 
-        collision_point = p_vector.intersection(line)
+        collision_point = projected_path.intersection(line)
         if collision_point == None:
             return math.inf
 
-        # !!! calculate time to hit collision point 
+        # collision_point is on projected_path so dx/vx = dy/vy
+        if self.vx != 0.0:
+            dx = collision_point.x - p0.x
+            time = dx / self.vx
+        elif self.vy != 0.0:
+            dy = collision_point.y - p0.y
+            time = dy / self.vy
+        else:
+            time = math.inf
+
+        return time
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):
@@ -343,6 +357,7 @@ class LineSegment:
         self.p1 = point_1
 
     def intersection(self, line):
+        # https://stackoverflow.com/a/1968345/3160610
         p0 = self.p0
         p1 = self.p1
         q0 = line.p0
