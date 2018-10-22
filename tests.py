@@ -4,6 +4,7 @@ from queue import Queue
 from graphics import *
 from collision import *
 from particles import *
+import math_utils
 
 class TestIntegration(unittest.TestCase):
     def setUp(self):
@@ -34,6 +35,7 @@ class TestIntegration(unittest.TestCase):
         self.particles[0].bounceOff(self.particles[1])
         self.assertFalse(evt.isValid(self.particles))
 
+
 class TestParticle(unittest.TestCase):
     def setUp(self):
         self.window = GraphWin('Test', 200, 200)
@@ -54,6 +56,28 @@ class TestParticle(unittest.TestCase):
         self.a.bounceOff(self.b)
         newTotal = self.a.vx + self.a.vy + self.b.vx + self.b.vy
         self.assertTrue(total == newTotal)
+
+    def test_bounceOffLineSegment(self):
+        # test verticle lines
+        line1 = LineSegment(Point(100,0), Point(100, 100))
+        self.a.bounceOffLineSegment(line1)
+        self.assertTrue(self.a.vx == -10.0 and self.a.vy == 0.0)
+        line2 = LineSegment(Point(0,0), Point(0, 100))
+        self.b.bounceOffLineSegment(line2)
+        self.assertTrue(self.b.vx == 10.0 and self.b.vy == 0.0)
+
+        # test horizontal line from top and bottom
+        line3 = LineSegment(Point(0,200), Point(200, 200))
+        self.d.bounceOffLineSegment(line3)
+        self.assertTrue(self.d.vx == 0.0 and self.d.vy == -10.0)
+        self.e.bounceOffLineSegment(line3)
+        self.assertTrue(self.e.vx == 0.0 and self.e.vy == 10.0)
+
+        # test particle moving at an angle against horizontal line
+        p1 = Particle(8, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 20.0, radius = 5.0)
+        p1.bounceOffLineSegment(line3)
+        print (p1.vx, p1.vy)
+        # self.assertTrue(p1.vx == 10.0 and p1.vy == -20.0) 
 
     def test_timeToHit(self):
         dx = 50.0 - 47.5
@@ -161,20 +185,8 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(round(self.g.distFromCenter(37.5), 6) == 16.426796) 
         self.assertTrue(round(self.g.distFromCenter(30), 2) == 20.0) 
 
-    def test_calcAngle(self):
-        self.assertTrue(self.a.calcAngle(0, 0) == 90) # default
-        self.assertTrue(self.a.calcAngle(10, 0) == 0) # top
-        self.assertTrue(self.a.calcAngle(0, 10) == 90) # right
-        self.assertTrue(self.a.calcAngle(0, -10) == 270) # left 
-        self.assertTrue(self.a.calcAngle(-10, 0) == 180) # bot
-        self.assertTrue(self.a.calcAngle(0, 100) == 90) # dist doesn't matter if horizontal 
-        self.assertTrue(self.a.calcAngle(100, 0) == 0) # dist doesn't matter if vertical 
-        self.assertTrue(self.a.calcAngle(10, 10) == 45) # top right 
-        self.assertTrue(self.a.calcAngle(10, -10) == 315) # top left 
-        self.assertTrue(self.a.calcAngle(-10, -10) == 225) # bot left 
-        self.assertTrue(self.a.calcAngle(-10, 10) == 135) # bot right 
-        self.assertTrue(self.a.calcAngle(10, 10) + 180 == self.a.calcAngle(-10, -10))
 
+class TestLineSegment(unittest.TestCase):    
     def test_line_intersection(self):
         p0 = Point(0.0, 0.0)
         p1 = Point(5.0, 0.0)
@@ -204,13 +216,15 @@ class TestParticle(unittest.TestCase):
 
         # non-intersecting lines
         cp5 = line4.intersection(line2)
-        self.assertTrue(cp5 == None)
+        cp6 = line1.intersection(line6)
+        self.assertTrue(cp5 == None and cp6 == None)
 
         # overlapping lines 
-        cp6 = line4.intersection(line5)
-        cp7 = line5.intersection(line6)
-        cp8 = line1.intersection(line4)
-        self.assertTrue(cp6 == None and cp7 == None and cp8 == None)
+        cp7 = line4.intersection(line5)
+        cp8 = line5.intersection(line6)
+        cp9 = line1.intersection(line4)
+        self.assertTrue(cp7 == None and cp8 == None and cp9 == None)
+
 
 class TestCollisionSys(unittest.TestCase):
     def setUp(self):
@@ -242,6 +256,23 @@ class TestCollisionSys(unittest.TestCase):
         sz = self.result_q.qsize()
         CollisionSystem.predict(self.a, 0, 10000, self.particles, self.walls, self.result_q)
         self.assertTrue(self.result_q.qsize() == (sz + 2)) # only two possible collisions (1 wall, 1 particle) 
+
+
+class TestMathUtils(unittest.TestCase):
+    def test_angle(self):
+        self.assertTrue(math_utils.angle(0, 0) == 90) # default
+        self.assertTrue(math_utils.angle(10, 0) == 0) # top
+        self.assertTrue(math_utils.angle(0, 10) == 90) # right
+        self.assertTrue(math_utils.angle(0, -10) == 270) # left 
+        self.assertTrue(math_utils.angle(-10, 0) == 180) # bot
+        self.assertTrue(math_utils.angle(0, 100) == 90) # dist doesn't matter if horizontal 
+        self.assertTrue(math_utils.angle(100, 0) == 0) # dist doesn't matter if vertical 
+        self.assertTrue(math_utils.angle(10, 10) == 45) # top right 
+        self.assertTrue(math_utils.angle(10, -10) == 315) # top left 
+        self.assertTrue(math_utils.angle(-10, -10) == 225) # bot left 
+        self.assertTrue(math_utils.angle(-10, 10) == 135) # bot right 
+        self.assertTrue(math_utils.angle(10, 10) + 180 == math_utils.angle(-10, -10))
+
 
 if __name__ == '__main__':
     unittest.main()

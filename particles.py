@@ -6,6 +6,7 @@ Defines particles for use in particle simulation
 import math
 import random
 from graphics import Point, Circle, Rectangle, color_rgb
+import math_utils
 
 # Defines a Particle object which can be used in the Collision Simulator
 class Particle:
@@ -72,17 +73,8 @@ class Particle:
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
 
-    def pythagorean(self, side1, side2):
-        return math.sqrt((side1 * side1) + (side2 * side2))
-
-    def calcAngle(self, dy, dx):
-        radians = math.atan2(dy, dx) # between -pi and pi
-        degrees = radians * 180/math.pi
-        if degrees > 90:
-            degrees = 450 - degrees
-        else:
-            degrees = 90 - degrees
-        return degrees
+    def angle(self):
+        return math_utils.angle(self.vy, self.vx)
 
     def distFromCenter(self, deg):
         if self.shape_type == "Circle":
@@ -126,7 +118,7 @@ class Particle:
             edgePoint.x = edgePoint.x + (xFactor * (self.height / (2.0 * tanTheta)))  # "Z1"
             edgePoint.y = edgePoint.y + (yFactor * (self.height /  2.0))
 
-        return self.pythagorean(edgePoint.x - (self.width/2.0),
+        return math_utils.pythag(edgePoint.x - (self.width/2.0),
                                 edgePoint.y - (self.height/2.0))
 
     # Calculates time until collision with another Particle
@@ -153,8 +145,8 @@ class Particle:
         dvdv = dvx*dvx + dvy*dvy
         drdr = dx*dx + dy*dy
 
-        dist_from_center1 = self.distFromCenter(self.calcAngle(dx, dy))
-        dist_from_center2 = that.distFromCenter(that.calcAngle(-dx, -dy))
+        dist_from_center1 = self.distFromCenter(self.angle())
+        dist_from_center2 = that.distFromCenter(180.0 - that.angle())
         sigma = dist_from_center1 + dist_from_center2
 
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
@@ -185,9 +177,27 @@ class Particle:
             return math.inf
 
     def timeToHitLineSegment(self, line):
+        p, cp = self.getProjectedCollisionPoints(line)
+                
+        if p is None or cp is None:
+            return math.inf
+
+        # collision_point is on projected_path so dx/vx = dy/vy
+        if self.vx != 0.0:
+            dx = cp.x - p.x
+            time = dx / self.vx
+        elif self.vy != 0.0:
+            dy = cp.y - p.y
+            time = dy / self.vy
+        else:
+            time = math.inf
+
+        return time
+
+    def getProjectedCollisionPoints(self, line):
         # need to calculate two extra projected lines to represent full width of circle
-        # starting points are the particle center adjusted by radius and angle of travelling path
-        deg = self.calcAngle(self.vy, self.vx)
+        # starting points are the particle center adjusted by radius and angle of traveling path
+        deg = self.angle()
         adj0 = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
         adj1 = Point(self.radius * math.sin(math.radians(deg + 90.0)), self.radius * math.cos(math.radians(deg + 90.0)))
         adj2 = Point(self.radius * math.sin(math.radians(deg - 90.0)), self.radius * math.cos(math.radians(deg - 90.0)))
@@ -213,8 +223,7 @@ class Particle:
         collision_point0 = projected_path0.intersection(line)
 
         if collision_point0 is not None:
-            collision_point = collision_point0
-            p = Point(p0.x, p0.y)
+            return Point(p0.x, p0.y), collision_point0
         else:
             # test full width of circle for edge cases
             projected_path1 = LineSegment(p1, q1)
@@ -222,26 +231,11 @@ class Particle:
             collision_point1 = projected_path1.intersection(line)
             collision_point2 = projected_path2.intersection(line)
             if collision_point1 == None and collision_point2 == None:
-                return math.inf
+                return None, None
             elif collision_point1 is not None:
-                collision_point = collision_point1
-                p = Point(p1.x, p1.y)
-
+                return Point(p1.x, p1.y), collision_point1
             else:
-                collision_point = collision_point2
-                p = Point(p2.x, p2.y)
-                
-        # collision_point is on projected_path so dx/vx = dy/vy
-        if self.vx != 0.0:
-            dx = collision_point.x - p.x
-            time = dx / self.vx
-        elif self.vy != 0.0:
-            dy = collision_point.y - p.y
-            time = dy / self.vy
-        else:
-            time = math.inf
-
-        return time
+                return Point(p2.x, p2.y), collision_point2
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):
@@ -272,7 +266,7 @@ class Particle:
         dvdr = dx*dvx + dy*dvy
 
         # calculate distance between centers
-        dist = self.pythagorean(dx, dy)
+        dist = math_utils.pythag(dx, dy)
 
         # calculate magnitude of force
         J = 2 * self.mass * that.mass * dvdr / ((self.mass + that.mass) * dist)
@@ -291,6 +285,34 @@ class Particle:
     def bounceOffHWall(self):
         self.vy = -1 * self.vy
         self.collisionCnt = self.collisionCnt + 1
+
+    def bounceOffLineSegment(self, line):
+        x_percent = self.vx / (self.vx + self.vy)
+        y_percent = self.vy / (self.vx + self.vy)
+
+        angle1 = self.angle()
+        angle2 = line.angle()
+
+        p, cp = self.getProjectedCollisionPoints(line)
+
+        dx = cp.x - p.x
+        dy = cp.y - p.y
+        dvx = self.vx
+        dvy = self.vy
+
+        # dot product
+        dvdr = dx*dvx + dy*dvy
+
+        # calculate distance between centers
+        dist = math_utils.pythag(dx, dy)
+
+        # calculate magnitude of force
+        J = 2 * dvdr / dist
+        fx = J * dx / dist
+        fy = J * dy / dist
+        self.vx -= fx 
+        self.vy -= fy 
+        self.collisionCnt += 1
 
 class Immovable(Particle):
     def __init__(self, window,
@@ -408,3 +430,8 @@ class LineSegment:
             return collision_point
         
         return None
+
+    def angle(self):
+        dy = self.p1.y - self.p0.y
+        dx = self.p1.x - self.p0.x
+        return math_utils.angle(dy, dx)
