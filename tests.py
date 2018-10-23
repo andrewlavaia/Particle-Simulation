@@ -46,6 +46,11 @@ class TestParticle(unittest.TestCase):
         self.e = Particle(4, self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
         self.f = Particle(5, self.window, width = 20.0, height = 20.0, x = 160, y = 500, vx = 0, vy = 0, shape = "Rect")
         self.g = Particle(6, self.window, width = 40.0, height = 20.0, x = 160, y = 700, vx = 0, vy = 0, shape = "Rect")
+        self.h = Particle(7, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 20.0, radius = 5.0)
+        self.i = Particle(8, self.window, x = 40.0, y = 40.0, vx = -5.0, vy = 10.0, radius = 5.0)
+        self.j = Particle(9, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 2.0, radius = 5.0)
+        self.k = Particle(10, self.window, x = 40.0, y = 40.0, vx = -5.0, vy = -1.0, radius = 5.0)
+        self.l = Particle(11, self.window, x = 50.0, y = 50.0, vx = 5.0, vy = 5.0, radius = 5.0)
 
     def test_bounceOff(self):
         avx = self.a.vx
@@ -58,26 +63,48 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(total == newTotal)
 
     def test_bounceOffLineSegment(self):
-        # test verticle lines
         line1 = LineSegment(Point(100,0), Point(100, 100))
+        line2 = LineSegment(Point(0,0), Point(0, 100))
+        line3 = LineSegment(Point(0,200), Point(200, 200))
+        line4 = LineSegment(Point(0,0), Point(300, 100*math.sqrt(3)))
+        self.assertTrue(round(math.degrees(line4.angle()), 6) == 30.0)
+        line5 = LineSegment(Point(0,0), Point(200, -200))
+        self.assertTrue(round(math.degrees(line5.angle()), 6) == -45.0)
+
+        # test verticle lines
         self.a.bounceOffLineSegment(line1)
         self.assertTrue(self.a.vx == -10.0 and self.a.vy == 0.0)
-        line2 = LineSegment(Point(0,0), Point(0, 100))
         self.b.bounceOffLineSegment(line2)
         self.assertTrue(self.b.vx == 10.0 and self.b.vy == 0.0)
 
         # test horizontal line from top and bottom
-        line3 = LineSegment(Point(0,200), Point(200, 200))
         self.d.bounceOffLineSegment(line3)
         self.assertTrue(self.d.vx == 0.0 and self.d.vy == -10.0)
         self.e.bounceOffLineSegment(line3)
         self.assertTrue(self.e.vx == 0.0 and self.e.vy == 10.0)
 
         # test particle moving at an angle against horizontal line
-        p1 = Particle(8, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 20.0, radius = 5.0)
-        p1.bounceOffLineSegment(line3)
-        print (p1.vx, p1.vy)
-        # self.assertTrue(p1.vx == 10.0 and p1.vy == -20.0) 
+        self.h.bounceOffLineSegment(line3)
+        self.assertTrue(self.h.vx == 10.0 and self.h.vy == -20.0) 
+        self.i.bounceOffLineSegment(line3)
+        self.assertTrue(self.i.vx == -5.0 and self.i.vy == -10.0) 
+
+        # test particle moving at an angle against vertical line
+        self.j.bounceOffLineSegment(line1)
+        self.assertTrue(self.j.vx == -10.0 and self.j.vy == 2.0) 
+        self.k.bounceOffLineSegment(line2)
+        self.assertTrue(self.k.vx == 5.0 and self.k.vy == -1.0) 
+
+        # test particle moving horizontal against angled line
+        self.setUp()
+        self.a.bounceOffLineSegment(line4)
+        self.assertTrue(self.a.vx == 5.0 and 
+                round(self.a.vy, 5) == round((10 * math.sqrt(3)/2), 5)) 
+
+        # test angled particle moving against angled line
+        self.setUp()
+        self.l.bounceOffLineSegment(line5)
+        self.assertTrue(round(self.l.vx, 4) == -5.0 and round(self.l.vy, 4) == -5.0)
 
     def test_timeToHit(self):
         dx = 50.0 - 47.5
@@ -259,19 +286,19 @@ class TestCollisionSys(unittest.TestCase):
 
 
 class TestMathUtils(unittest.TestCase):
-    def test_angle(self):
-        self.assertTrue(math_utils.angle(0, 0) == 90) # default
-        self.assertTrue(math_utils.angle(10, 0) == 0) # top
-        self.assertTrue(math_utils.angle(0, 10) == 90) # right
-        self.assertTrue(math_utils.angle(0, -10) == 270) # left 
-        self.assertTrue(math_utils.angle(-10, 0) == 180) # bot
-        self.assertTrue(math_utils.angle(0, 100) == 90) # dist doesn't matter if horizontal 
-        self.assertTrue(math_utils.angle(100, 0) == 0) # dist doesn't matter if vertical 
-        self.assertTrue(math_utils.angle(10, 10) == 45) # top right 
-        self.assertTrue(math_utils.angle(10, -10) == 315) # top left 
-        self.assertTrue(math_utils.angle(-10, -10) == 225) # bot left 
-        self.assertTrue(math_utils.angle(-10, 10) == 135) # bot right 
-        self.assertTrue(math_utils.angle(10, 10) + 180 == math_utils.angle(-10, -10))
+    def test_degrees_clockwise(self):
+        self.assertTrue(math_utils.degrees_clockwise(0, 0) == 90) # default
+        self.assertTrue(math_utils.degrees_clockwise(10, 0) == 0) # top
+        self.assertTrue(math_utils.degrees_clockwise(0, 10) == 90) # right
+        self.assertTrue(math_utils.degrees_clockwise(0, -10) == 270) # left 
+        self.assertTrue(math_utils.degrees_clockwise(-10, 0) == 180) # bot
+        self.assertTrue(math_utils.degrees_clockwise(0, 100) == 90) # dist doesn't matter if horizontal 
+        self.assertTrue(math_utils.degrees_clockwise(100, 0) == 0) # dist doesn't matter if vertical 
+        self.assertTrue(math_utils.degrees_clockwise(10, 10) == 45) # top right 
+        self.assertTrue(math_utils.degrees_clockwise(10, -10) == 315) # top left 
+        self.assertTrue(math_utils.degrees_clockwise(-10, -10) == 225) # bot left 
+        self.assertTrue(math_utils.degrees_clockwise(-10, 10) == 135) # bot right 
+        self.assertTrue(math_utils.degrees_clockwise(10, 10) + 180 == math_utils.degrees_clockwise(-10, -10))
 
 
 if __name__ == '__main__':

@@ -73,8 +73,8 @@ class Particle:
         self.x = self.x + (self.vx * dt)
         self.y = self.y + (self.vy * dt)
 
-    def angle(self):
-        return math_utils.angle(self.vy, self.vx)
+    def direction(self):
+        return math_utils.degrees_clockwise(self.vy, self.vx)
 
     def distFromCenter(self, deg):
         if self.shape_type == "Circle":
@@ -145,8 +145,8 @@ class Particle:
         dvdv = dvx*dvx + dvy*dvy
         drdr = dx*dx + dy*dy
 
-        dist_from_center1 = self.distFromCenter(self.angle())
-        dist_from_center2 = that.distFromCenter(180.0 - that.angle())
+        dist_from_center1 = self.distFromCenter(self.direction())
+        dist_from_center2 = that.distFromCenter(180.0 - that.direction())
         sigma = dist_from_center1 + dist_from_center2
 
         d = (dvdr*dvdr) - (dvdv * (drdr - sigma*sigma))
@@ -197,7 +197,7 @@ class Particle:
     def getProjectedCollisionPoints(self, line):
         # need to calculate two extra projected lines to represent full width of circle
         # starting points are the particle center adjusted by radius and angle of traveling path
-        deg = self.angle()
+        deg = self.direction()
         adj0 = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
         adj1 = Point(self.radius * math.sin(math.radians(deg + 90.0)), self.radius * math.cos(math.radians(deg + 90.0)))
         adj2 = Point(self.radius * math.sin(math.radians(deg - 90.0)), self.radius * math.cos(math.radians(deg - 90.0)))
@@ -287,31 +287,19 @@ class Particle:
         self.collisionCnt = self.collisionCnt + 1
 
     def bounceOffLineSegment(self, line):
-        x_percent = self.vx / (self.vx + self.vy)
-        y_percent = self.vy / (self.vx + self.vy)
+        angle = line.angle()
+        precision = 6
 
-        angle1 = self.angle()
-        angle2 = line.angle()
-
-        p, cp = self.getProjectedCollisionPoints(line)
-
-        dx = cp.x - p.x
-        dy = cp.y - p.y
-        dvx = self.vx
-        dvy = self.vy
+        # compute normal vector
+        normal_x = -round(math.sin(angle), precision)
+        normal_y = round(math.cos(angle), precision)
 
         # dot product
-        dvdr = dx*dvx + dy*dvy
+        dot = normal_x * self.vx + normal_y * self.vy
 
-        # calculate distance between centers
-        dist = math_utils.pythag(dx, dy)
+        self.vx = self.vx - 2 * dot * normal_x
+        self.vy = self.vy - 2 * dot * normal_y
 
-        # calculate magnitude of force
-        J = 2 * dvdr / dist
-        fx = J * dx / dist
-        fy = J * dy / dist
-        self.vx -= fx 
-        self.vy -= fy 
         self.collisionCnt += 1
 
 class Immovable(Particle):
