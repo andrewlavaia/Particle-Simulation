@@ -1,9 +1,17 @@
 particles:
-  group1:
-    color: black
-    height: 10.0
-    mass: 1.0
-    n: 200
-    radius: 5.0
+  group2:
+    color: random
+    height: 80.0
+    mass: 5.0
+    n: 3
+    radius: 40.0
     shape: Circle
-    width: 10.0
+    width: 80.0
+  group3:
+    color: black
+    height: 6.0
+    mass: 0.5
+    n: 50
+    radius: 3.0
+    shape: Circle
+    width: 6.0

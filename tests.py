@@ -4,6 +4,7 @@ from queue import Queue
 from graphics import *
 from collision import *
 from particles import *
+from walls import *
 import math_utils
 
 class TestIntegration(unittest.TestCase):
@@ -99,12 +100,12 @@ class TestParticle(unittest.TestCase):
         self.setUp()
         self.a.bounceOffLineSegment(line4)
         self.assertTrue(self.a.vx == 5.0 and 
-                round(self.a.vy, 5) == round((10 * math.sqrt(3)/2), 5)) 
+                round(self.a.vy, 8) == round((10 * math.sqrt(3)/2), 8)) 
 
         # test angled particle moving against angled line
         self.setUp()
         self.l.bounceOffLineSegment(line5)
-        self.assertTrue(round(self.l.vx, 4) == -5.0 and round(self.l.vy, 4) == -5.0)
+        self.assertTrue(round(self.l.vx, 8) == -5.0 and round(self.l.vy, 8) == -5.0)
 
     def test_timeToHit(self):
         dx = 50.0 - 47.5

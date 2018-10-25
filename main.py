@@ -10,7 +10,8 @@ import multiprocessing as mp
 
 from graphics import GraphWin, Point, Line
 from collision import CollisionSystem 
-from particles import Particle, ParticleShape, ParticleFactory, VWall, HWall
+from particles import Particle, ParticleShape, ParticleFactory
+from walls import *
 from menu import MainMenu
 
 # import os
@@ -46,16 +47,26 @@ def main():
 
     menu_height = 20.0
     walls.append(VWall(0.0))
-    walls.append(VWall(window.width))
+    walls.append(VWall(window.width - 1))
     walls.append(HWall(0.0))
-    walls.append(HWall(window.height - menu_height))
+    walls.append(HWall(window.height - menu_height - 1))
+    walls.append(LineSegment(Point(100.0, 100.0), Point(200.0, 100.0)))
+    walls.append(LineSegment(Point(200.0, 100.0), Point(200.0, 200.0)))
+    walls.append(LineSegment(Point(200.0, 200.0), Point(100.0, 200.0)))
+    walls.append(LineSegment(Point(100.0, 200.0), Point(100.0, 100.0)))
+    walls.append(LineSegment(Point(300.0, 300.0), Point(400.0, 400.0)))
+    walls.append(LineSegment(Point(400.0, 400.0), Point(300.0, 500.0)))
+    walls.append(LineSegment(Point(300.0, 500.0), Point(200.0, 400.0)))
+    walls.append(LineSegment(Point(200.0, 400.0), Point(300.0, 300.0)))
 
     for wall in walls:
-        if wall.type == "VWall":
+        if wall.wall_type == "VWall":
             ln = Line(Point(wall.x, 0), Point(wall.x, window.height))
+        elif wall.wall_type == "HWall":
+            ln = Line(Point(0, wall.y), Point(window.width, wall.y))
         else:
-            ln = Line(Point(0, wall.y), Point(window.width, wall.y))   
-            ln.draw(window)
+            ln = Line(wall.p0, wall.p1)   
+        ln.draw(window)
 
     for particle in particles:
         CollisionSystem.predict(particle, 0.0, 10000, particles, walls, work_completed_q)

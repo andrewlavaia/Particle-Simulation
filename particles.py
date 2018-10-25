@@ -6,6 +6,7 @@ Defines particles for use in particle simulation
 import math
 import random
 from graphics import Point, Circle, Rectangle, color_rgb
+from walls import LineSegment
 import math_utils
 
 # Defines a Particle object which can be used in the Collision Simulator
@@ -158,6 +159,15 @@ class Particle:
 
         return -1 * (dvdr + math.sqrt(d)) / dvdv
 
+    # calculates time (in ms) until collision with a wall
+    def timeToHitWall(self, wall):
+        if wall.wall_type == "HWall":
+            return self.timeToHitHWall(wall)
+        elif wall.wall_type == "VWall":
+            return self.timeToHitVWall(wall)
+        else:
+            return self.timeToHitLineSegment(wall)
+
     # calculates time (in ms) until collision with horizontal wall
     def timeToHitHWall(self, wall):
         if self.y < wall.y and self.vy > 0:
@@ -225,17 +235,19 @@ class Particle:
         if collision_point0 is not None:
             return Point(p0.x, p0.y), collision_point0
         else:
-            # test full width of circle for edge cases
-            projected_path1 = LineSegment(p1, q1)
-            projected_path2 = LineSegment(p2, q2)
-            collision_point1 = projected_path1.intersection(line)
-            collision_point2 = projected_path2.intersection(line)
-            if collision_point1 == None and collision_point2 == None:
-                return None, None
-            elif collision_point1 is not None:
-                return Point(p1.x, p1.y), collision_point1
-            else:
-                return Point(p2.x, p2.y), collision_point2
+            return None, None
+        # else:
+        #     # test full width of circle for edge cases
+        #     projected_path1 = LineSegment(p1, q1)
+        #     projected_path2 = LineSegment(p2, q2)
+        #     collision_point1 = projected_path1.intersection(line)
+        #     collision_point2 = projected_path2.intersection(line)
+        #     if collision_point1 == None and collision_point2 == None:
+        #         return None
+        #     elif collision_point1 is not None:
+        #         return Point(p1.x, p1.y), collision_point1
+        #     else:
+        #         return Point(p2.x, p2.y), collision_point2
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):
@@ -288,7 +300,7 @@ class Particle:
 
     def bounceOffLineSegment(self, line):
         angle = line.angle()
-        precision = 6
+        precision = 10
 
         # compute normal vector
         normal_x = -round(math.sin(angle), precision)
@@ -338,15 +350,6 @@ class RectParticle(Particle):
         super().__init__(window, radius, x, y, vx, vy, mass, color,
             shape = "Rect", width = width, height = height)
 
-class VWall:
-    def __init__(self, x):
-        self.type = "VWall"
-        self.x = x
-
-class HWall:    
-    def __init__(self, y):
-        self.type = "HWall"
-        self.y = y
 
 # Defines a shape object to be used for drawing the 
 # corresponding Particle object with the same index
@@ -390,36 +393,3 @@ class ParticleFactory:
         self.particle_shapes.append(ParticleShape(self.count, self.window, self.particles[self.count]))
         self.count += 1
 
-
-class LineSegment:
-    def __init__(self, point_0, point_1):
-        self.p0 = point_0
-        self.p1 = point_1
-
-    def intersection(self, line):
-        # https://stackoverflow.com/a/1968345/3160610
-        p0 = self.p0
-        p1 = self.p1
-        q0 = line.p0
-        q1 = line.p1
-        s0 = Point(p1.x - p0.x, p1.y - p0.y)
-        s1 = Point(q1.x - q0.x, q1.y - q0.y)
-
-        try:
-            s = (-s0.y * (p0.x - q0.x) + s0.x * (p0.y - q0.y)) / (-s1.x * s0.y + s0.x * s1.y)
-            t = ( s1.x * (p0.y - q0.y) - s1.y * (p0.x - q0.x)) / (-s1.x * s0.y + s0.x * s1.y)            
-
-        except ZeroDivisionError:
-            # lines overlap so multiple collision points exist
-            return None
-
-        if s >= 0 and s <= 1 and t >= 0 and t <= 1:
-            collision_point = Point(p0.x + (t * s0.x), p0.y + (t * s0.y))
-            return collision_point
-        
-        return None
-
-    def angle(self):
-        dy = self.p1.y - self.p0.y
-        dx = self.p1.x - self.p0.x
-        return math_utils.angle(dy, dx)

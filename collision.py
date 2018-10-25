@@ -31,7 +31,7 @@ class Event:
     def isValid(self, particles):
         if (self.a is not None and self.countA != particles[self.a].collisionCnt):
             return False
-        if (self.b is not None and self.countB != particles[self.b].collisionCnt):
+        if (self.b is not None and isinstance(self.b, int) and self.countB != particles[self.b].collisionCnt):
             return False
         return True
 
@@ -57,16 +57,20 @@ class CollisionSystem:
         
         # insert collision time with every wall into the queue
         for wall in walls:
-            if (wall.type == "VWall"):
-                dt = a.timeToHitVWall(wall)
-                evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
-                if next_logic_tick + dt <= limit:
-                    result_q.put(evt)
-            else:
-                dt = a.timeToHitHWall(wall)
-                evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
-                if next_logic_tick + dt <= limit:   
-                    result_q.put(evt)
+            dt = a.timeToHitWall(wall)
+            evt = Event(next_logic_tick + dt, a.index, wall, a.collisionCnt, None)
+            if next_logic_tick + dt <= limit:
+                result_q.put(evt)
+            # if wall.wall_type == "VWall":
+            #     dt = a.timeToHitVWall(wall)
+            #     evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
+            #     if next_logic_tick + dt <= limit:
+            #         result_q.put(evt)
+            # elif wall.wall_type == "HWall":
+            #     dt = a.timeToHitHWall(wall)
+            #     evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
+            #     if next_logic_tick + dt <= limit:   
+            #         result_q.put(evt)
 
     def processCompletedWork(result_q, pq):
         while not result_q.empty():
@@ -92,13 +96,23 @@ class CollisionSystem:
 
             a = evt.a
             b = evt.b
-            if a is not None and b is not None:
+            if isinstance(b, int):
                 particles[a].bounceOff(particles[b])
                 work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))
-            elif a is not None and b is None:
+                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))    
+            elif b.wall_type == "VWall":
                 particles[a].bounceOffVWall()
                 work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
-            elif a is None and b is not None:
-                particles[b].bounceOffHWall()
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))
+            elif b.wall_type == "HWall":
+                particles[a].bounceOffHWall()
+                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+            elif b.wall_type == "LineSegment":
+                particles[a].bounceOffLineSegment(b)
+                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+
+            # elif a is not None and b is None:
+            #     particles[a].bounceOffVWall()
+            #     work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+            # elif a is None and b is not None:
+            #     particles[b].bounceOffHWall()
+            #     work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))
