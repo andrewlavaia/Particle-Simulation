@@ -17,3 +17,11 @@ def angle(dy, dx):
 
 def pythag(side1, side2):
     return math.sqrt((side1 * side1) + (side2 * side2))
+
+def distance(point1, point2):
+    if point1 is None or point2 is None:
+        return math.inf
+        
+    dx = point2.x - point1.x
+    dy = point1.y - point1.y
+    return pythag(dx, dy)

@@ -68,9 +68,9 @@ class TestParticle(unittest.TestCase):
         line2 = LineSegment(Point(0,0), Point(0, 100))
         line3 = LineSegment(Point(0,200), Point(200, 200))
         line4 = LineSegment(Point(0,0), Point(300, 100*math.sqrt(3)))
-        self.assertTrue(round(math.degrees(line4.angle()), 6) == 30.0)
+        self.assertTrue(round(math.degrees(line4.angle), 6) == 30.0)
         line5 = LineSegment(Point(0,0), Point(200, -200))
-        self.assertTrue(round(math.degrees(line5.angle()), 6) == -45.0)
+        self.assertTrue(round(math.degrees(line5.angle), 6) == -45.0)
 
         # test verticle lines
         self.a.bounceOffLineSegment(line1)

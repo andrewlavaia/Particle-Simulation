@@ -19,6 +19,7 @@ class LineSegment(WallBase):
         self.wall_type = "LineSegment"
         self.p0 = point_0
         self.p1 = point_1
+        self.angle = self.calcAngle()
 
     def intersection(self, line):
         # https://stackoverflow.com/a/1968345/3160610
@@ -43,7 +44,7 @@ class LineSegment(WallBase):
         
         return None
 
-    def angle(self):
+    def calcAngle(self):
         dy = self.p1.y - self.p0.y
         dx = self.p1.x - self.p0.x
         return math_utils.angle(dy, dx)

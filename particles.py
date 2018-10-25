@@ -230,24 +230,23 @@ class Particle:
         )
 
         projected_path0 = LineSegment(p0, q0)
+        projected_path1 = LineSegment(p1, q1)
+        projected_path2 = LineSegment(p2, q2)
         collision_point0 = projected_path0.intersection(line)
-
-        if collision_point0 is not None:
-            return Point(p0.x, p0.y), collision_point0
+        collision_point1 = projected_path1.intersection(line)
+        collision_point2 = projected_path2.intersection(line)
+        d0 = math_utils.distance(p0, collision_point0)
+        d1 = math_utils.distance(p1, collision_point1)
+        d2 = math_utils.distance(p2, collision_point2)
+        min_dist = min(d0, d1, d2)
+        if d0 == min_dist:
+            return p0, collision_point0
+        elif d1 == min_dist:
+            return p1, collision_point1
+        elif d2 == min_dist:
+            return p2, collision_point2
         else:
             return None, None
-        # else:
-        #     # test full width of circle for edge cases
-        #     projected_path1 = LineSegment(p1, q1)
-        #     projected_path2 = LineSegment(p2, q2)
-        #     collision_point1 = projected_path1.intersection(line)
-        #     collision_point2 = projected_path2.intersection(line)
-        #     if collision_point1 == None and collision_point2 == None:
-        #         return None
-        #     elif collision_point1 is not None:
-        #         return Point(p1.x, p1.y), collision_point1
-        #     else:
-        #         return Point(p2.x, p2.y), collision_point2
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):
@@ -299,7 +298,7 @@ class Particle:
         self.collisionCnt = self.collisionCnt + 1
 
     def bounceOffLineSegment(self, line):
-        angle = line.angle()
+        angle = line.angle
         precision = 10
 
         # compute normal vector
