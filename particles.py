@@ -186,25 +186,28 @@ class Particle:
         else:
             return math.inf
 
+    def closestPointOnLineSegment(self, line):
+        dx = self.x - line.p0.x
+        dy = self.y - line.p0.y
+        
+        # get unit vector
+        unit_x = line.dx / line.length
+        unit_y = line.dy / line.length
+
+        # calculate dot product and check end points
+        dot = (dx * unit_x) + (dy * unit_y)
+        if dot < 0:
+            return line.p0
+        elif dot > line.length:
+            return line.p1
+        
+        # project vector onto line
+        x_dist = dot * unit_x        
+        y_dist = dot * unit_y
+
+        return Point(line.p0.x + x_dist, line.p0.y + y_dist)
+        
     def timeToHitLineSegment(self, line):
-        p, cp = self.getProjectedCollisionPoints(line)
-                
-        if p is None or cp is None:
-            return math.inf
-
-        # collision_point is on projected_path so dx/vx = dy/vy
-        if self.vx != 0.0:
-            dx = cp.x - p.x
-            time = dx / self.vx
-        elif self.vy != 0.0:
-            dy = cp.y - p.y
-            time = dy / self.vy
-        else:
-            time = math.inf
-
-        return time
-
-    def getProjectedCollisionPoints(self, line):
         # need to calculate two extra projected lines to represent full width of circle
         # starting points are the particle center adjusted by radius and angle of traveling path
         deg = self.direction()
@@ -235,18 +238,31 @@ class Particle:
         collision_point0 = projected_path0.intersection(line)
         collision_point1 = projected_path1.intersection(line)
         collision_point2 = projected_path2.intersection(line)
-        d0 = math_utils.distance(p0, collision_point0)
-        d1 = math_utils.distance(p1, collision_point1)
-        d2 = math_utils.distance(p2, collision_point2)
-        min_dist = min(d0, d1, d2)
-        if d0 == min_dist:
-            return p0, collision_point0
-        elif d1 == min_dist:
-            return p1, collision_point1
-        elif d2 == min_dist:
-            return p2, collision_point2
-        else:
-            return None, None
+
+        t0, t1, t2 = math.inf, math.inf, math.inf
+        if collision_point0 is not None:
+            if self.vx != 0:
+                d0 = collision_point0.x - p0.x
+                t0 = d0 / self.vx
+            else:
+                d0 = collision_point0.y - p0.y
+                t0 = d0 / self.vy
+        if collision_point1 is not None:
+            if self.vx != 0:
+                d1 = collision_point1.x - p1.x
+                t1 = d1 / self.vx
+            else:
+                d1 = collision_point1.y - p1.y
+                t1 = d1 / self.vy
+        if collision_point2 is not None:
+            if self.vx != 0:
+                d2 = collision_point2.x - p2.x
+                t2 = d2 / self.vx
+            else:
+                d2 = collision_point2.y - p2.y
+                t2 = d2 / self.vy
+
+        return min(t0, t1, t2)
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):

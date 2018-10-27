@@ -52,6 +52,7 @@ class TestParticle(unittest.TestCase):
         self.j = Particle(9, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 2.0, radius = 5.0)
         self.k = Particle(10, self.window, x = 40.0, y = 40.0, vx = -5.0, vy = -1.0, radius = 5.0)
         self.l = Particle(11, self.window, x = 50.0, y = 50.0, vx = 5.0, vy = 5.0, radius = 5.0)
+        self.m = Particle(12, self.window, x = 2.0, y = 2.0, vx = 5.0, vy = 5.0, radius = 5.0)
 
     def test_bounceOff(self):
         avx = self.a.vx
@@ -213,6 +214,45 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(round(self.g.distFromCenter(37.5), 6) == 16.426796) 
         self.assertTrue(round(self.g.distFromCenter(30), 2) == 20.0) 
 
+    def test_closestPointOnLineSegment(self): 
+        # horizontal line
+        line1 = LineSegment(Point(0.0, 0.0), Point(0.0, self.window.height))
+        line2 = LineSegment(Point(self.window.width, 0.0), Point(self.window.width, self.window.height))
+        a1 = self.a.closestPointOnLineSegment(line1)
+        a2 = self.a.closestPointOnLineSegment(line2)
+        self.assertTrue(a1.x == 0.0 and a1.y == 5.0)
+        self.assertTrue(a2.x == self.window.width and a2.y == 5.0)
+        
+        # verticle line
+        line3 = LineSegment(Point(0.0, 0.0), Point(self.window.width, 0.0))
+        a3 = self.a.closestPointOnLineSegment(line3)
+        self.assertTrue(a3.x == 47.5 and a3.y == 0.0)
+        
+        # line segment end points
+        line4 = LineSegment(Point(50.0, 0.0), Point(80.0, 0.0))
+        line5 = LineSegment(Point(0.0, 0.0), Point(30.0, 0.0))
+        a4 = self.a.closestPointOnLineSegment(line4)
+        a5 = self.a.closestPointOnLineSegment(line5)
+        self.assertTrue(a4.x == 50.0 and a4.y == 0.0)
+        self.assertTrue(a5.x == 30.0 and a5.y == 0.0)
+
+        # sloping line
+        line6 = LineSegment(Point(0.0, 0.0), Point(50.0, 50.0))
+        a6 = self.a.closestPointOnLineSegment(line6)
+        self.assertTrue(round(a6.x, 10) == 26.25 and round(a6.y, 10) == 26.25)
+
+        line7 = LineSegment(Point(0.0, 4.0), Point(4.0, 0.0))
+        line8 = LineSegment(Point(0.0, 5.0), Point(5.0, 0.0))
+        line9 = LineSegment(Point(2.0, 0.0), Point(0.0, 2.0))
+        line10 = LineSegment(Point(2.0, 5.0), Point(4.0, 1.0))
+        m1 = self.m.closestPointOnLineSegment(line7)
+        m2 = self.m.closestPointOnLineSegment(line8)
+        m3 = self.m.closestPointOnLineSegment(line9)
+        m4 = self.m.closestPointOnLineSegment(line10)
+        self.assertTrue(round(m1.x, 10) == 2.0 and round(m1.y, 10) == 2.0)
+        self.assertTrue(round(m2.x, 10) == 2.5 and round(m2.y, 10) == 2.5)
+        self.assertTrue(round(m3.x, 10) == 1.0 and round(m3.y, 10) == 1.0)
+        self.assertTrue(round(m4.x, 10) == 3.2 and round(m4.y, 10) == 2.6)
 
 class TestLineSegment(unittest.TestCase):    
     def test_line_intersection(self):
