@@ -208,13 +208,20 @@ class Particle:
         return Point(line.p0.x + x_dist, line.p0.y + y_dist)
         
     def timeToHitLineSegment(self, line):
-        # need to calculate two extra projected lines to represent full width of circle
-        # starting points are the particle center adjusted by radius and angle of traveling path
-        deg = self.direction()
+        # get closest point of circle to line segment
+        line_point = self.closestPointOnLineSegment(line)
+        dx = line_point.x - self.x
+        dy = line_point.y - self.y
+        if (dx * dx + dy * dy) < (self.radius * self.radius): # point is within circle
+            return math.inf 
+        deg = math_utils.degrees_clockwise(dy, dx)
         adj0 = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
+        p0 = Point(self.x + adj0.x, self.y + adj0.y) 
+
+        # get two extra points that are 90 degrees from traveling angle
+        deg = self.direction()
         adj1 = Point(self.radius * math.sin(math.radians(deg + 90.0)), self.radius * math.cos(math.radians(deg + 90.0)))
         adj2 = Point(self.radius * math.sin(math.radians(deg - 90.0)), self.radius * math.cos(math.radians(deg - 90.0)))
-        p0 = Point(self.x + adj0.x, self.y + adj0.y) 
         p1 = Point(self.x + adj1.x, self.y + adj1.y) 
         p2 = Point(self.x + adj2.x, self.y + adj2.y) 
 

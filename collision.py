@@ -58,7 +58,8 @@ class CollisionSystem:
         # insert collision time with every wall into the queue
         for wall in walls:
             dt = a.timeToHitWall(wall)
-            evt = Event(next_logic_tick + dt, a.index, wall, a.collisionCnt, None)
+            minTime = max(next_logic_tick - 1.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick            
+            evt = Event(minTime, a.index, wall, a.collisionCnt, None)
             if next_logic_tick + dt <= limit:
                 result_q.put(evt)
             # if wall.wall_type == "VWall":
