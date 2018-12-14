@@ -213,63 +213,38 @@ class Particle:
         dx = line_point.x - self.x
         dy = line_point.y - self.y
         if (dx * dx + dy * dy) < (self.radius * self.radius): # point is within circle
-            return math.inf 
-        deg = math_utils.degrees_clockwise(dy, dx)
-        adj0 = Point(self.radius * math.sin(math.radians(deg)), self.radius * math.cos(math.radians(deg)))
-        p0 = Point(self.x + adj0.x, self.y + adj0.y) 
+            return -0.5 # already colliding
 
-        # get two extra points that are 90 degrees from traveling angle
-        deg = self.direction()
-        adj1 = Point(self.radius * math.sin(math.radians(deg + 90.0)), self.radius * math.cos(math.radians(deg + 90.0)))
-        adj2 = Point(self.radius * math.sin(math.radians(deg - 90.0)), self.radius * math.cos(math.radians(deg - 90.0)))
-        p1 = Point(self.x + adj1.x, self.y + adj1.y) 
-        p2 = Point(self.x + adj2.x, self.y + adj2.y) 
-
+        # build a series of projected paths from evenly spaced points 
+        # along half of the circle (as determined by direction it is moving)
+        # number of paths should be based on radius as larger particles require more precision
+        collision_times = []
+        num_times_to_compute = min(int(self.radius), 31)
+        if num_times_to_compute % 2 == 0:
+            num_times_to_compute += 1 # always odd number so point on direction vector is represented
+        degree_interval = 180/(num_times_to_compute - 1)
+        start_deg = self.direction() - 90.0
         scalar_factor = 1000.0
-        q0 = Point(
-            self.x + adj0.x + (scalar_factor * self.vx),
-            self.y + adj0.y + (scalar_factor * self.vy)
-        )
-        q1 = Point(
-            self.x + adj1.x + (scalar_factor * self.vx),
-            self.y + adj1.y + (scalar_factor * self.vy)
-        )
-        q2 = Point(
-            self.x + adj2.x + (scalar_factor * self.vx),
-            self.y + adj2.y + (scalar_factor * self.vy)
-        )
-
-        projected_path0 = LineSegment(p0, q0)
-        projected_path1 = LineSegment(p1, q1)
-        projected_path2 = LineSegment(p2, q2)
-        collision_point0 = projected_path0.intersection(line)
-        collision_point1 = projected_path1.intersection(line)
-        collision_point2 = projected_path2.intersection(line)
-
-        t0, t1, t2 = math.inf, math.inf, math.inf
-        if collision_point0 is not None:
-            if self.vx != 0:
-                d0 = collision_point0.x - p0.x
-                t0 = d0 / self.vx
-            else:
-                d0 = collision_point0.y - p0.y
-                t0 = d0 / self.vy
-        if collision_point1 is not None:
-            if self.vx != 0:
-                d1 = collision_point1.x - p1.x
-                t1 = d1 / self.vx
-            else:
-                d1 = collision_point1.y - p1.y
-                t1 = d1 / self.vy
-        if collision_point2 is not None:
-            if self.vx != 0:
-                d2 = collision_point2.x - p2.x
-                t2 = d2 / self.vx
-            else:
-                d2 = collision_point2.y - p2.y
-                t2 = d2 / self.vy
-
-        return min(t0, t1, t2)
+        for i in range(0, num_times_to_compute):
+            new_deg = start_deg + (i * degree_interval) 
+            adj = Point(self.radius * math.sin(math.radians(new_deg)), 
+                        self.radius * math.cos(math.radians(new_deg)))
+            p = Point(self.x + adj.x, self.y + adj.y) 
+            q = Point(p.x + (scalar_factor * self.vx), 
+                      p.y + (scalar_factor * self.vy))
+            projected_path = LineSegment(p, q)
+            collision_point = projected_path.intersection(line)
+            time_until_collision = math.inf
+            if collision_point is not None:
+                if self.vx != 0:
+                    dist = collision_point.x - p.x
+                    time_until_collision = dist / self.vx
+                else:
+                    dist = collision_point.y - p.y
+                    time_until_collision = dist / self.vy
+            collision_times.append(time_until_collision)
+        
+        return min(collision_times)
 
     #  adjusts velocity vector given a force from collision
     def moveByForce(self, that, fx, fy):
@@ -287,7 +262,6 @@ class Particle:
         #     self.vy = -1 * self.max_speed
 
         self.collisionCnt = self.collisionCnt + 1
-
 
     # adjusts velocity vectors of two objects after a collision
     def bounceOff(self, that):
@@ -334,7 +308,7 @@ class Particle:
         self.vx = self.vx - 2 * dot * normal_x
         self.vy = self.vy - 2 * dot * normal_y
 
-        self.collisionCnt += 1
+        self.collisionCnt = self.collisionCnt + 1
 
 class Immovable(Particle):
     def __init__(self, window,
