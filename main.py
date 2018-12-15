@@ -76,20 +76,21 @@ def main():
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
-    TICKS_PER_SECOND = 120 # how often collisions are checked 
+    TICKS_PER_SECOND = 60 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
     lastFrameTime = time.time()
+    lag = 0.0
 
     # Main Simulation Loop
     while simTime < limit:
         currentTime = time.time()
         elapsed = currentTime - lastFrameTime
         lastFrameTime = currentTime
+        lag += elapsed
+        simTime += elapsed
 
-        simTime = simTime + elapsed
-
-        if simTime > nextLogicTick:
+        while lag > TIME_PER_TICK:
             CollisionSystem.processCompletedWork(work_completed_q, pq)
             CollisionSystem.processCollisionEvents(particles, walls, pq, nextLogicTick, work_requested_q, work_completed_q)
 
@@ -98,14 +99,16 @@ def main():
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
-            nextLogicTick = nextLogicTick + TIME_PER_TICK
-           
-        else:
-            # render updates to window
             for particle_shape in particle_shapes:
                 particle_shape.x = particles[particle_shape.index].x
                 particle_shape.y = particles[particle_shape.index].y
-                particle_shape.render()  
+            
+            nextLogicTick = nextLogicTick + TIME_PER_TICK
+            lag -= TIME_PER_TICK
+
+        # render updates to window
+        for particle_shape in particle_shapes:
+            particle_shape.render()  
 
         if window.checkKey() == "space":
             main_menu.pause()
