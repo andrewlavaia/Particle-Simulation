@@ -208,13 +208,6 @@ class Particle:
         return Point(line.p0.x + x_dist, line.p0.y + y_dist)
         
     def timeToHitLineSegment(self, line):
-        # get closest point of circle to line segment
-        line_point = self.closestPointOnLineSegment(line)
-        dx = line_point.x - self.x
-        dy = line_point.y - self.y
-        if (dx * dx + dy * dy) < (self.radius * self.radius): # point is within circle
-            return -0.5 # already colliding
-
         # build a series of projected paths from evenly spaced points 
         # along half of the circle (as determined by direction it is moving)
         # number of paths should be based on radius as larger particles require more precision

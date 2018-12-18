@@ -39,7 +39,7 @@ class LineSegment(WallBase):
 
         except ZeroDivisionError:
             # lines overlap so multiple collision points exist
-            return None
+            return p0
 
         if s >= 0 and s <= 1 and t >= 0 and t <= 1:
             collision_point = Point(p0.x + (t * s0.x), p0.y + (t * s0.y))

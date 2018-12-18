@@ -34,7 +34,13 @@ def main():
     pf = ParticleFactory(window, particles, particle_shapes)
     walls = []
 
-    # create particles from config file
+    menu_height = 20.0
+    walls.append(VWall(0.0))
+    walls.append(VWall(window.width - 1))
+    walls.append(HWall(0.0))
+    walls.append(HWall(window.height - menu_height - 1))
+
+    # create particles and walls from config file
     dataMap = main_menu.getConfigData()
     for key in dataMap['particles']:
         curr = dataMap['particles'][key]
@@ -42,22 +48,14 @@ def main():
         for i in range(0, n):
             pf.create(**curr)
 
+    for key in dataMap.get('walls', {}):
+        curr = dataMap['walls'][key]
+        line = LineSegment(Point(curr['p0x'], curr['p0y']), Point(curr['p1x'], curr['p1y']))
+        walls.append(line)
+
+    # draw particles and walls
     for particle_shape in particle_shapes:
         particle_shape.draw()
-
-    menu_height = 20.0
-    walls.append(VWall(0.0))
-    walls.append(VWall(window.width - 1))
-    walls.append(HWall(0.0))
-    walls.append(HWall(window.height - menu_height - 1))
-    walls.append(LineSegment(Point(100.0, 100.0), Point(200.0, 100.0)))
-    walls.append(LineSegment(Point(200.0, 100.0), Point(200.0, 200.0)))
-    walls.append(LineSegment(Point(200.0, 200.0), Point(100.0, 200.0)))
-    walls.append(LineSegment(Point(100.0, 200.0), Point(100.0, 100.0)))
-    walls.append(LineSegment(Point(300.0, 300.0), Point(400.0, 400.0)))
-    walls.append(LineSegment(Point(400.0, 400.0), Point(300.0, 500.0)))
-    walls.append(LineSegment(Point(300.0, 500.0), Point(200.0, 400.0)))
-    walls.append(LineSegment(Point(200.0, 400.0), Point(300.0, 300.0)))
 
     for wall in walls:
         if wall.wall_type == "VWall":
@@ -76,7 +74,7 @@ def main():
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
-    TICKS_PER_SECOND = 60 # how often collisions are checked 
+    TICKS_PER_SECOND = 120 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
     lastFrameTime = time.time()
@@ -89,6 +87,10 @@ def main():
         lastFrameTime = currentTime
         lag += elapsed
         simTime += elapsed
+
+        if window.checkKey() == "space":
+            main_menu.pause()
+            lastFrameTime = time.time()
 
         while lag > TIME_PER_TICK:
             CollisionSystem.processCompletedWork(work_completed_q, pq)
@@ -103,16 +105,13 @@ def main():
                 particle_shape.x = particles[particle_shape.index].x
                 particle_shape.y = particles[particle_shape.index].y
             
-            nextLogicTick = nextLogicTick + TIME_PER_TICK
+            nextLogicTick += TIME_PER_TICK
             lag -= TIME_PER_TICK
 
         # render updates to window
         for particle_shape in particle_shapes:
             particle_shape.render()  
 
-        if window.checkKey() == "space":
-            main_menu.pause()
-            lastFrameTime = time.time()
     window.close
 
 def cleanup():
@@ -134,7 +133,7 @@ if __name__ == '__main__':
     work_requested_q = mp.Queue()
 
     # initialize workers
-    num_workers = 4
+    num_workers = 8
     workers = []
     for n in range(0, num_workers):
         workers.append(mp.Process(target=CollisionSystem.processWorkRequests, args=(work_requested_q, work_completed_q)))

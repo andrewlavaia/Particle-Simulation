@@ -49,7 +49,7 @@ class CollisionSystem:
             if a == b:
                 continue
             dt = a.timeToHit(b)
-            minTime = max(next_logic_tick - 1.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick
+            minTime = max(next_logic_tick - 25.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick
             evt = Event(minTime, a.index, b.index, a.collisionCnt, b.collisionCnt)
 
             if next_logic_tick + dt <= limit: 
@@ -58,20 +58,10 @@ class CollisionSystem:
         # insert collision time with every wall into the queue
         for wall in walls:
             dt = a.timeToHitWall(wall)
-            minTime = max(next_logic_tick - 1.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick            
+            minTime = max(next_logic_tick - 25.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick            
             evt = Event(minTime, a.index, wall, a.collisionCnt, None)
             if next_logic_tick + dt <= limit:
                 result_q.put(evt)
-            # if wall.wall_type == "VWall":
-            #     dt = a.timeToHitVWall(wall)
-            #     evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
-            #     if next_logic_tick + dt <= limit:
-            #         result_q.put(evt)
-            # elif wall.wall_type == "HWall":
-            #     dt = a.timeToHitHWall(wall)
-            #     evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
-            #     if next_logic_tick + dt <= limit:   
-            #         result_q.put(evt)
 
     def processCompletedWork(result_q, pq):
         while not result_q.empty():
@@ -79,7 +69,7 @@ class CollisionSystem:
             heapq.heappush(pq, evt)
 
     def processWorkRequests(work_q, result_q): 
-        print("{0} started".format(mp.current_process().name))
+        # print("{0} started".format(mp.current_process().name))
         while True:
             work = work_q.get() # blocks automatically when q is empty
             # print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
@@ -110,10 +100,3 @@ class CollisionSystem:
             elif b.wall_type == "LineSegment":
                 particles[a].bounceOffLineSegment(b)
                 work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
-
-            # elif a is not None and b is None:
-            #     particles[a].bounceOffVWall()
-            #     work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
-            # elif a is None and b is not None:
-            #     particles[b].bounceOffHWall()
-            #     work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))

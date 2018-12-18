@@ -23,3 +23,29 @@ particles:
     shape: "Circle"
     width: 6.0
     height: 6.0
+walls:
+  line1:
+    p0x: 100.0
+    p0y: 100.0
+    p1x: 200.0
+    p1y: 100.0
+  line2:
+    p0x: 200.0
+    p0y: 100.0
+    p1x: 200.0
+    p1y: 200.0
+  line3:
+    p0x: 200.0
+    p0y: 200.0
+    p1x: 100.0
+    p1y: 200.0
+  line5:
+    p0x: 300.0
+    p0y: 300.0
+    p1x: 400.0
+    p1y: 400.0
+  line6:
+    p0x: 400.0
+    p0y: 400.0
+    p1x: 300.0
+    p1y: 500.0
