@@ -74,7 +74,7 @@ def main():
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
-    TICKS_PER_SECOND = 120 # how often collisions are checked 
+    TICKS_PER_SECOND = 60 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
     lastFrameTime = time.time()
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     work_requested_q = mp.Queue()
 
     # initialize workers
-    num_workers = 8
+    num_workers = 4
     workers = []
     for n in range(0, num_workers):
         workers.append(mp.Process(target=CollisionSystem.processWorkRequests, args=(work_requested_q, work_completed_q)))

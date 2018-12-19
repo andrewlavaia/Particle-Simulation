@@ -16,6 +16,7 @@ class HWall(WallBase):
 
 class LineSegment(WallBase):
     def __init__(self, point_0, point_1):
+        self.id = id(self)
         self.wall_type = "LineSegment"
         self.p0 = point_0
         self.p1 = point_1
@@ -46,3 +47,6 @@ class LineSegment(WallBase):
             return collision_point
         
         return None
+    
+    def __eq__(self, other):
+        return self.id == other.id

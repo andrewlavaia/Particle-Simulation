@@ -49,19 +49,17 @@ class CollisionSystem:
             if a == b:
                 continue
             dt = a.timeToHit(b)
-            minTime = max(next_logic_tick - 25.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick
-            evt = Event(minTime, a.index, b.index, a.collisionCnt, b.collisionCnt)
+            evt = Event(next_logic_tick + dt, a.index, b.index, a.collisionCnt, b.collisionCnt)
 
             if next_logic_tick + dt <= limit: 
-                result_q.put(evt)
+                result_q.put_nowait(evt)
         
         # insert collision time with every wall into the queue
         for wall in walls:
             dt = a.timeToHitWall(wall)
-            minTime = max(next_logic_tick - 25.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick            
-            evt = Event(minTime, a.index, wall, a.collisionCnt, None)
+            evt = Event(next_logic_tick + dt, a.index, wall, a.collisionCnt, None)
             if next_logic_tick + dt <= limit:
-                result_q.put(evt)
+                result_q.put_nowait(evt)
 
     def processCompletedWork(result_q, pq):
         while not result_q.empty():
@@ -89,14 +87,14 @@ class CollisionSystem:
             b = evt.b
             if isinstance(b, int):
                 particles[a].bounceOff(particles[b])
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles, walls))    
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+                work_q.put_nowait(WorkRequest(b, nextLogicTick, 10000, particles, walls))    
             elif b.wall_type == "VWall":
                 particles[a].bounceOffVWall()
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
             elif b.wall_type == "HWall":
                 particles[a].bounceOffHWall()
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
             elif b.wall_type == "LineSegment":
                 particles[a].bounceOffLineSegment(b)
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))

@@ -64,6 +64,7 @@ class Particle:
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
                                             # invalidated
+        self.last_collided_line = None
 
     # equality comparator
     def __eq__(self, other):
@@ -212,7 +213,7 @@ class Particle:
         # along half of the circle (as determined by direction it is moving)
         # number of paths should be based on radius as larger particles require more precision
         collision_times = []
-        num_times_to_compute = min(int(self.radius), 31)
+        num_times_to_compute = min(int(self.radius) + 5, 31)
         if num_times_to_compute % 2 == 0:
             num_times_to_compute += 1 # always odd number so point on direction vector is represented
         degree_interval = 180/(num_times_to_compute - 1)
@@ -229,7 +230,7 @@ class Particle:
             collision_point = projected_path.intersection(line)
             time_until_collision = math.inf
             if collision_point is not None:
-                if self.vx != 0:
+                if self.vx != 0.0:
                     dist = collision_point.x - p.x
                     time_until_collision = dist / self.vx
                 else:
@@ -277,17 +278,25 @@ class Particle:
         self.moveByForce(that, fx, fy)
         that.moveByForce(self, -fx, -fy)
 
+        self.last_collided_line = None
+        that.last_collided_line = None
+
     # adjusts velocity of object after colliding with vertical wall
     def bounceOffVWall(self):
         self.vx = -1 * self.vx
         self.collisionCnt = self.collisionCnt + 1
+        self.last_collided_line = None
 
     # adjusts velocity of object after colliding with horizontal wall
     def bounceOffHWall(self):
         self.vy = -1 * self.vy
         self.collisionCnt = self.collisionCnt + 1
+        self.last_collided_line = None
 
     def bounceOffLineSegment(self, line):
+        if self.last_collided_line is not None and self.last_collided_line == line:
+            return
+
         angle = line.angle
         precision = 10
 
@@ -302,6 +311,7 @@ class Particle:
         self.vy = self.vy - 2 * dot * normal_y
 
         self.collisionCnt = self.collisionCnt + 1
+        self.last_collided_line = line
 
 class Immovable(Particle):
     def __init__(self, window,

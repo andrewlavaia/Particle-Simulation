@@ -600,7 +600,6 @@ class Oval(_BBox):
 
     def __repr__(self):
         return "Oval({}, {})".format(str(self.p1), str(self.p2))
-
         
     def clone(self):
         other = Oval(self.p1, self.p2)
@@ -620,6 +619,7 @@ class Circle(Oval):
         p1 = Point(center.x-radius, center.y-radius)
         p2 = Point(center.x+radius, center.y+radius)
         Oval.__init__(self, p1, p2)
+        self.center = center
         self.radius = radius
 
     def __repr__(self):
@@ -632,6 +632,13 @@ class Circle(Oval):
         
     def getRadius(self):
         return self.radius
+
+    def getCenter(self):
+        return self.center
+
+    def _move(self, dx, dy):
+        self.center.x = self.center.x + dx
+        self.center.y = self.center.y + dy
 
                   
 class Line(_BBox):
