@@ -8,9 +8,10 @@ import time
 import sys
 import multiprocessing as mp
 
-from graphics import GraphWin
+from graphics import GraphWin, Point, Line
 from collision import CollisionSystem 
-from particles import Particle, Immovable, RectParticle, Wall, ParticleShape, ParticleFactory
+from particles import Particle, ParticleShape, ParticleFactory
+from walls import *
 from menu import MainMenu
 
 # import os
@@ -31,8 +32,15 @@ def main():
     particles = []
     particle_shapes = []
     pf = ParticleFactory(window, particles, particle_shapes)
+    walls = []
 
-    # create particles from config file
+    menu_height = 20.0
+    walls.append(VWall(0.0))
+    walls.append(VWall(window.width - 1))
+    walls.append(HWall(0.0))
+    walls.append(HWall(window.height - menu_height - 1))
+
+    # create particles and walls from config file
     dataMap = main_menu.getConfigData()
     for key in dataMap['particles']:
         curr = dataMap['particles'][key]
@@ -40,56 +48,70 @@ def main():
         for i in range(0, n):
             pf.create(**curr)
 
+    for key in dataMap.get('walls', {}):
+        curr = dataMap['walls'][key]
+        line = LineSegment(Point(curr['p0x'], curr['p0y']), Point(curr['p1x'], curr['p1y']))
+        walls.append(line)
+
+    # draw particles and walls
     for particle_shape in particle_shapes:
         particle_shape.draw()
-    
+
+    for wall in walls:
+        if wall.wall_type == "VWall":
+            ln = Line(Point(wall.x, 0), Point(wall.x, window.height))
+        elif wall.wall_type == "HWall":
+            ln = Line(Point(0, wall.y), Point(window.width, wall.y))
+        else:
+            ln = Line(wall.p0, wall.p1)   
+        ln.draw(window)
+
     for particle in particles:
-        CollisionSystem.predict(particle, 0.0, 10000, particles, work_completed_q)
+        CollisionSystem.predict(particle, 0.0, 10000, particles, walls, work_completed_q)
     while not work_requested_q.empty():
         pass
 
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
-    TICKS_PER_SECOND = 120 # how often collisions are checked 
+    TICKS_PER_SECOND = 60 # how often collisions are checked 
     TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
     nextLogicTick = TIME_PER_TICK
     lastFrameTime = time.time()
+    lag = 0.0
 
     # Main Simulation Loop
     while simTime < limit:
         currentTime = time.time()
         elapsed = currentTime - lastFrameTime
         lastFrameTime = currentTime
+        lag += elapsed
+        simTime += elapsed
 
-        simTime = simTime + elapsed
+        if window.checkKey() == "space":
+            main_menu.pause()
+            lastFrameTime = time.time()
 
-        if simTime > nextLogicTick:
+        while lag > TIME_PER_TICK:
             CollisionSystem.processCompletedWork(work_completed_q, pq)
-            CollisionSystem.processCollisionEvents(particles, pq, nextLogicTick, work_requested_q, work_completed_q)
+            CollisionSystem.processCollisionEvents(particles, walls, pq, nextLogicTick, work_requested_q, work_completed_q)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
                 # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
                 # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
-            nextLogicTick = nextLogicTick + TIME_PER_TICK
-           
-        else:
-            # render updates to window
             for particle_shape in particle_shapes:
                 particle_shape.x = particles[particle_shape.index].x
                 particle_shape.y = particles[particle_shape.index].y
-                particle_shape.render()  
+            
+            nextLogicTick += TIME_PER_TICK
+            lag -= TIME_PER_TICK
 
-        # check if user wants to end simulation
-        if window.checkMouse() is not None:
-            pass
-            # window.close()
+        # render updates to window
+        for particle_shape in particle_shapes:
+            particle_shape.render()  
 
-        if window.checkKey() == "space":
-            main_menu.pause()
-            lastFrameTime = time.time()
     window.close
 
 def cleanup():

@@ -31,14 +31,14 @@ class Event:
     def isValid(self, particles):
         if (self.a is not None and self.countA != particles[self.a].collisionCnt):
             return False
-        if (self.b is not None and self.countB != particles[self.b].collisionCnt):
+        if (self.b is not None and isinstance(self.b, int) and self.countB != particles[self.b].collisionCnt):
             return False
         return True
 
 # Collision System is used to predict when and how particles will collide
 class CollisionSystem:
     # Inserts all predicted collisions with a given particle as Events into the queue.
-    def predict(a, next_logic_tick, limit, particles, result_q):
+    def predict(a, next_logic_tick, limit, particles, walls, result_q):
         if a is None:
             return
         
@@ -49,21 +49,17 @@ class CollisionSystem:
             if a == b:
                 continue
             dt = a.timeToHit(b)
-            minTime = max(next_logic_tick - 1.0, next_logic_tick + dt) # collision shouldn't occur before current next_logic_tick
-            evt = Event(minTime, a.index, b.index, a.collisionCnt, b.collisionCnt)
+            evt = Event(next_logic_tick + dt, a.index, b.index, a.collisionCnt, b.collisionCnt)
 
             if next_logic_tick + dt <= limit: 
-                result_q.put(evt)
+                result_q.put_nowait(evt)
         
         # insert collision time with every wall into the queue
-        dt = a.timeToHitVWall()
-        evt = Event(next_logic_tick + dt, a.index, None, a.collisionCnt, None)
-        if next_logic_tick + dt <= limit:
-            result_q.put(evt)
-        dt = a.timeToHitHWall()
-        evt = Event(next_logic_tick + dt, None, a.index, None, a.collisionCnt)
-        if next_logic_tick + dt <= limit:   
-            result_q.put(evt)
+        for wall in walls:
+            dt = a.timeToHitWall(wall)
+            evt = Event(next_logic_tick + dt, a.index, wall, a.collisionCnt, None)
+            if next_logic_tick + dt <= limit:
+                result_q.put_nowait(evt)
 
     def processCompletedWork(result_q, pq):
         while not result_q.empty():
@@ -71,13 +67,13 @@ class CollisionSystem:
             heapq.heappush(pq, evt)
 
     def processWorkRequests(work_q, result_q): 
-        print("{0} started".format(mp.current_process().name))
+        # print("{0} started".format(mp.current_process().name))
         while True:
             work = work_q.get() # blocks automatically when q is empty
-            print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
-            CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, result_q)
+            # print("{0} is working. {1} requests remaining.".format(mp.current_process().name, work_q.qsize()))
+            CollisionSystem.predict(work.particles[work.particle_index], work.time, work.limit, work.particles, work.walls, result_q)
 
-    def processCollisionEvents(particles, pq, nextLogicTick, work_q, result_q):  
+    def processCollisionEvents(particles, walls, pq, nextLogicTick, work_q, result_q):  
         lastEvt = None
         while len(pq) > 0 and pq[0].time < nextLogicTick:
             evt = heapq.heappop(pq)
@@ -89,15 +85,16 @@ class CollisionSystem:
 
             a = evt.a
             b = evt.b
-            if a is not None and b is not None:
+            if isinstance(b, int):
                 particles[a].bounceOff(particles[b])
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles))
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles))
-            elif a is not None and b is None:
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+                work_q.put_nowait(WorkRequest(b, nextLogicTick, 10000, particles, walls))    
+            elif b.wall_type == "VWall":
                 particles[a].bounceOffVWall()
-                work_q.put(WorkRequest(a, nextLogicTick, 10000, particles))
-            elif a is None and b is not None:
-                particles[b].bounceOffHWall()
-                work_q.put(WorkRequest(b, nextLogicTick, 10000, particles))
-
-
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+            elif b.wall_type == "HWall":
+                particles[a].bounceOffHWall()
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
+            elif b.wall_type == "LineSegment":
+                particles[a].bounceOffLineSegment(b)
+                work_q.put_nowait(WorkRequest(a, nextLogicTick, 10000, particles, walls))
