@@ -109,10 +109,12 @@ class InputBox(UIBase):
         return Point(self.point.x, self.point.y + 30)
 
 class Table(UIBase):
-    def __init__(self, canvas, point):
+    def __init__(self, canvas, point, row_height=30, col_width=70):
         self.canvas = canvas
         self.point = point
         self.rows = []
+        self.row_height = row_height
+        self.col_width = col_width
 
     def addRow(self, *args):
         row = TableRow(self.canvas, args)
@@ -130,12 +132,12 @@ class Table(UIBase):
         offset = Point(0, 0)
         for i in range(len(self.rows)):
             row = self.rows[i]
-            offset.y = self.point.y + (i * 30)
+            offset.y = self.point.y + (i * self.row_height)
             for j in range(len(row.values)):
-                offset.x = self.point.x + (j * 70)
+                offset.x = self.point.x + (j * self.col_width)
                 row.labels.append(Text(offset, row.values[j]))
             if i > 0: 
-                offset.x = self.point.x + (len(row.values) * 70) - 30            
+                offset.x = self.point.x + (len(row.values) * self.col_width) - 30            
                 row.button = Button(self.canvas, offset, 15, 15, '-')
             row.draw()
 
