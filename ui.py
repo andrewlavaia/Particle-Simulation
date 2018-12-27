@@ -1,5 +1,5 @@
-import re # regex
-from abc import ABCMeta, abstractmethod # abstract base class
+import re
+from abc import ABCMeta, abstractmethod
 from graphics import *
 from colors import available_colors
 
@@ -11,6 +11,11 @@ class UIBase(metaclass = ABCMeta):
     @abstractmethod
     def undraw(self):
         """Removes object from self.canvas"""
+
+    def redraw(self):
+        self.undraw()
+        self.draw()
+
 
 class Button(UIBase):
     def __init__(self, canvas, center, width, height, label):
@@ -54,6 +59,7 @@ class Button(UIBase):
     def undraw(self):
         self.rect.undraw()
         self.label.undraw()
+
 
 class InputBox(UIBase):
     def __init__(self, canvas, point, input_type, label_text, char_max = 10, default_val = None):
@@ -145,9 +151,6 @@ class Table(UIBase):
         for row in self.rows:
             row.undraw()
 
-    def redraw(self):
-        self.undraw()
-        self.draw()
 
 class TableRow(UIBase):
     def __init__(self, canvas, *args):

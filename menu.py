@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 import file_utils
 from ui import *
 
@@ -7,15 +8,16 @@ class MainMenu:
         self.callback = callback
         self.config_flag = 1
         config_data = self.getConfigData()
-        self.particle_table = ParticleTable(Table(self.window, Point(350, 100)), config_data)
-        self.wall_table = WallTable(Table(self.window, Point(710, 150), 20, 110), config_data)
         
-    def loadMenu(self):
+        self.particle_table = ParticleTable(Table(self.window, Point(350, 100)), config_data)
+        self.wall_table = WallTable(Table(self.window, Point(710, 175), 20, 110), config_data)
+
+    def drawMenu(self):
         self.window.clear()
         self.window.setBackground('white')
-        self.group_data_dict = {}
-        self.group_cntr = 0
-        self.wall_cntr = 0
+
+        self.particle_table.table.redraw()
+        self.wall_table.table.redraw()
         
         custom_sim_header = HeaderText(self.window, Point(350, 30), 'Custom Simulation')
 
@@ -26,6 +28,12 @@ class MainMenu:
         self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 200, 30, 'Add Group')
 
         environment_header = HeaderText(self.window, Point(850, 30), 'Environment')
+
+        self.input_p0x = InputBox(self.window, Point(750.0, 100.0), 'unsigned_float', 'Point 0', 4, 10)
+        self.input_p0y = InputBox(self.window, Point(800.0, 100.0), 'unsigned_float', '', 4, 10)
+        self.input_p1x = InputBox(self.window, Point(750.0, 130.0), 'unsigned_float', 'Point 1', 4,  50) 
+        self.input_p1y = InputBox(self.window, Point(800.0, 130.0), 'unsigned_float', '', 4, 50) 
+        self.add_wall_btn = Button(self.window, Point(950.0, 115.0), 75, 30, 'Add Wall')
 
         ln_1 = Line(Point(700, 0), Point(700, self.window.height))
         ln_1.draw(self.window)
@@ -39,13 +47,12 @@ class MainMenu:
         self.simulation_btn = Button(self.window, Point(350, 600.0), 150, 75, 'Run Simulation')
 
     def run(self):
-        self.loadMenu()
-        self.particle_table.table.redraw()
-        self.wall_table.table.redraw()
+        self.drawMenu()
+
         while True:    
             last_clicked_pt = self.window.getMouse()
             if last_clicked_pt is not None:
-                if self.simulation_btn.clicked(last_clicked_pt) and self.validInputs():
+                if self.simulation_btn.clicked(last_clicked_pt):
                     self.setConfigData()
                     return self.callback()
 
@@ -55,18 +62,21 @@ class MainMenu:
                     r = self.input_r.getInput()
                     m = self.input_m.getInput()
                     self.particle_table.insertFromInputs(n, color, r, m)
+                
+                elif self.add_wall_btn.clicked(last_clicked_pt) and self.validInputs():
+                    p0x = self.input_p0x.getInput()
+                    p0y = self.input_p0y.getInput()
+                    p1x = self.input_p1x.getInput()
+                    p1y = self.input_p1y.getInput()
+                    self.wall_table.insertFromInputs(p0x, p0y, p1x, p1y)
 
                 elif self.scenario_1_btn.clicked(last_clicked_pt):
                     self.config_flag = 1
                     return self.callback()
 
                 else:
-                    for row in self.particle_table.table.rows:
-                        if row.button and row.button.clicked(last_clicked_pt):
-                            self.particle_table.remove(row.values[0]) 
-                    for row in self.wall_table.table.rows:
-                        if row.button and row.button.clicked(last_clicked_pt):
-                            self.wall_table.remove(row.values[0]) 
+                    self.particle_table.checkRemoveBtnClicked(last_clicked_pt)
+                    self.wall_table.checkRemoveBtnClicked(last_clicked_pt)
                         
     def getConfigData(self):
         config_data = {}
@@ -96,15 +106,41 @@ class MainMenu:
        return self.input_n.validateInput() and \
                 self.input_color.validateInput() and \
                 self.input_r.validateInput() and \
-                self.input_m.validateInput()
+                self.input_m.validateInput() and \
+                self.input_p0x.validateInput() and \
+                self.input_p0y.validateInput() and \
+                self.input_p1x.validateInput() and \
+                self.input_p1y.validateInput()
 
 
-class ParticleTable:
-    def __init__(self, table, config_data):
-        self.name = "particles"
+class ConfigTableBase(metaclass=ABCMeta):
+    def __init__(self, name, table, config_data):
+        self.name = name
         self.row_cntr = 0
         self.data_dict = config_data.get(self.name, {})
         self.table = table
+
+    @abstractmethod
+    def loadRowsFromConfig(self):
+        pass
+
+    @abstractmethod
+    def insertFromInputs(self):
+        pass 
+
+    def checkRemoveBtnClicked(self, last_clicked_pt):
+        for row in self.table.rows:
+            if row.button and row.button.clicked(last_clicked_pt):
+                self.remove(row.values[0]) 
+
+    def remove(self, index):
+        self.data_dict.pop(str(index))
+        self.table.deleteRow(int(index))
+
+
+class ParticleTable(ConfigTableBase):
+    def __init__(self, table, config_data):
+        super().__init__("particles", table, config_data)
         self.table.addRow("id", "quantity", "color", "radius", "mass")
         self.loadRowsFromConfig()
 
@@ -130,18 +166,11 @@ class ParticleTable:
         }
         self.data_dict.update(group)
         self.table.addRow(self.row_cntr, n, color, r, m)
-    
-    def remove(self, index):
-        self.data_dict.pop(str(index))
-        self.table.deleteRow(int(index))
 
 
-class WallTable:
+class WallTable(ConfigTableBase):
     def __init__(self, table, config_data):
-        self.name = "walls"
-        self.row_cntr = 0
-        self.data_dict = config_data.get(self.name, {})
-        self.table = table
+        super().__init__("walls", table, config_data)
         self.table.addRow("id", "Point 0", "Point 1")
         self.loadRowsFromConfig()
 
@@ -167,8 +196,6 @@ class WallTable:
             }
         }
         self.data_dict.update(group)
-        self.table.addRow(self.row_cntr, p0x, p0y, p1x, p1y)
-    
-    def remove(self, index):
-        self.data_dict.pop(str(index))
-        self.table.deleteRow(int(index))
+        p0 = "(" + str(p0x) + ", " + str(p0y) + ")" 
+        p1 = "(" + str(p1x) + ", " + str(p1y) + ")" 
+        self.table.addRow(self.row_cntr, p0, p1)
