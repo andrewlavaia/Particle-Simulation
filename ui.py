@@ -133,6 +133,11 @@ class Table(UIBase):
                 row.undraw()
                 self.rows.remove(row)
         self.redraw()
+    
+    def deleteAllRows(self):
+        for row in self.rows:
+            row.undraw()
+        self.rows = []
 
     def draw(self):
         offset = Point(0, 0)

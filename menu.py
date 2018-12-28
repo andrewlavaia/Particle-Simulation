@@ -6,11 +6,11 @@ class MainMenu:
     def __init__(self, window, callback):
         self.window = window
         self.callback = callback
-        self.config_flag = 1
-        config_data = self.getConfigData()
+        self.config_data = file_utils.load_config('config.yml')
         
-        self.particle_table = ParticleTable(Table(self.window, Point(350, 100)), config_data)
-        self.wall_table = WallTable(Table(self.window, Point(710, 175), 20, 110), config_data)
+        self.particle_table = ParticleTable(Table(self.window, Point(350, 350)), self.config_data)
+        self.wall_table = WallTable(Table(self.window, Point(710, 175), 20, 110), self.config_data)
+        self.scenarios = []
 
     def drawMenu(self):
         self.window.clear()
@@ -20,20 +20,25 @@ class MainMenu:
         self.wall_table.table.redraw()
         
         custom_sim_header = HeaderText(self.window, Point(350, 30), 'Custom Simulation')
+        self.simulation_btn = Button(self.window, Point(350, 135), 200, 100, 'Run Simulation')
 
-        self.input_n = InputBox(self.window, Point(100.0, 100.0), 'unsigned_int', '# of particles: ', 4, 40)
+        particle_header = HeaderText(self.window, Point(350, 290), 'Particles')
+        self.input_n = InputBox(self.window, Point(100.0, 350.0), 'unsigned_int', '# of particles: ', 4, 40)
         self.input_color = InputBox(self.window, self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'black')
         self.input_r = InputBox(self.window, self.input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
         self.input_m = InputBox(self.window, self.input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
-        self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 200, 30, 'Add Group')
+        self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 150, 30, 'Add Group')
 
         environment_header = HeaderText(self.window, Point(850, 30), 'Environment')
 
-        self.input_p0x = InputBox(self.window, Point(750.0, 100.0), 'unsigned_float', 'Point 0', 4, 10)
+        self.input_p0x = InputBox(self.window, Point(750.0, 100.0), 'unsigned_float', 'Point 0:', 4, 10)
         self.input_p0y = InputBox(self.window, Point(800.0, 100.0), 'unsigned_float', '', 4, 10)
-        self.input_p1x = InputBox(self.window, Point(750.0, 130.0), 'unsigned_float', 'Point 1', 4,  50) 
+        self.input_p1x = InputBox(self.window, Point(750.0, 130.0), 'unsigned_float', 'Point 1:', 4,  50) 
         self.input_p1y = InputBox(self.window, Point(800.0, 130.0), 'unsigned_float', '', 4, 50) 
         self.add_wall_btn = Button(self.window, Point(950.0, 115.0), 75, 30, 'Add Wall')
+
+        ln_0 = Line(Point(0, 250), Point(700, 250))
+        ln_0.draw(self.window)
 
         ln_1 = Line(Point(700, 0), Point(700, self.window.height))
         ln_1.draw(self.window)
@@ -42,9 +47,22 @@ class MainMenu:
         ln_2.draw(self.window)
 
         scenario_header = HeaderText(self.window, Point(850, 525), 'Scenarios')
-        self.scenario_1_btn = Button(self.window, Point(775, 600), 100, 50, 'Default')
-
-        self.simulation_btn = Button(self.window, Point(350, 600.0), 150, 75, 'Run Simulation')
+        scenario_1_btn = Button(self.window, Point(780, 575), 120, 30, 'Standard')
+        self.scenarios.append({'btn': scenario_1_btn, 'file': 'scenarios/standard.yml'})
+        scenario_2_btn = Button(self.window, Point(780, 625), 120, 30, '200 Hundred')
+        self.scenarios.append({'btn': scenario_2_btn, 'file': 'scenarios/200hundred.yml'})
+        scenario_3_btn = Button(self.window, Point(780, 675), 120, 30, 'Big + Small')
+        self.scenarios.append({'btn': scenario_3_btn, 'file': 'scenarios/bigsmall.yml'})
+        scenario_4_btn = Button(self.window, Point(780, 725), 120, 30, 'Crazy')
+        self.scenarios.append({'btn': scenario_4_btn, 'file': 'scenarios/crazy.yml'})
+        scenario_5_btn = Button(self.window, Point(940, 575), 120, 30, 'Walls a plenty')
+        self.scenarios.append({'btn': scenario_5_btn, 'file': 'scenarios/wallsaplenty.yml'})
+        scenario_6_btn = Button(self.window, Point(940, 625), 120, 30, 'Diffusion')
+        self.scenarios.append({'btn': scenario_6_btn, 'file': 'scenarios/diffusion.yml'})
+        scenario_7_btn = Button(self.window, Point(940, 675), 120, 30, 'Volcano')
+        self.scenarios.append({'btn': scenario_7_btn, 'file': 'scenarios/volcano.yml'})
+        scenario_8_btn = Button(self.window, Point(940, 725), 120, 30, 'Triangle Split')
+        self.scenarios.append({'btn': scenario_8_btn, 'file': 'scenarios/trianglesplit.yml'})
 
     def run(self):
         self.drawMenu()
@@ -70,21 +88,15 @@ class MainMenu:
                     p1y = self.input_p1y.getInput()
                     self.wall_table.insertFromInputs(p0x, p0y, p1x, p1y)
 
-                elif self.scenario_1_btn.clicked(last_clicked_pt):
-                    self.config_flag = 1
-                    return self.callback()
-
                 else:
                     self.particle_table.checkRemoveBtnClicked(last_clicked_pt)
                     self.wall_table.checkRemoveBtnClicked(last_clicked_pt)
-                        
-    def getConfigData(self):
-        config_data = {}
-        if self.config_flag == 1:
-            config_data = file_utils.load_config('config_default.yml')
-        elif self.config_flag == 0:
-            config_data = file_utils.load_config('config.yml')
-        return config_data
+
+                    for scen in self.scenarios:
+                        if scen['btn'].clicked(last_clicked_pt):
+                            self.config_data = file_utils.load_config(scen['file'])
+                            self.particle_table.setData(self.config_data)
+                            self.wall_table.setData(self.config_data)     
     
     def setConfigData(self):
         data = {
@@ -92,7 +104,6 @@ class MainMenu:
             'walls': self.wall_table.data_dict
         }
         file_utils.set_config(data) 
-        self.config_flag = 0
 
     def pause(self):
         message = Text(Point(self.window.width/2.0, self.window.height/2.0 - 50.0), 'Paused')
@@ -137,14 +148,20 @@ class ConfigTableBase(metaclass=ABCMeta):
         self.data_dict.pop(str(index))
         self.table.deleteRow(int(index))
 
+    def setData(self, config_data):
+        self.data_dict = config_data.get(self.name, {})
+        self.loadRowsFromConfig()
+        self.table.redraw()
+
 
 class ParticleTable(ConfigTableBase):
     def __init__(self, table, config_data):
         super().__init__("particles", table, config_data)
-        self.table.addRow("id", "quantity", "color", "radius", "mass")
         self.loadRowsFromConfig()
 
     def loadRowsFromConfig(self):
+        self.table.deleteAllRows()
+        self.table.addRow("id", "quantity", "color", "radius", "mass")
         for name, data in self.data_dict.items():
             key = int(name)
             self.row_cntr = key if key > self.row_cntr else self.row_cntr
@@ -171,10 +188,11 @@ class ParticleTable(ConfigTableBase):
 class WallTable(ConfigTableBase):
     def __init__(self, table, config_data):
         super().__init__("walls", table, config_data)
-        self.table.addRow("id", "Point 0", "Point 1")
         self.loadRowsFromConfig()
 
     def loadRowsFromConfig(self):
+        self.table.deleteAllRows()
+        self.table.addRow("id", "Point 0", "Point 1")
         for name, data in self.data_dict.items():
             key = int(name)
             self.row_cntr = key if key > self.row_cntr else self.row_cntr

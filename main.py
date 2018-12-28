@@ -7,6 +7,7 @@ with one another
 import time
 import sys
 import multiprocessing as mp
+import copy
 
 from graphics import GraphWin, Point, Line
 from collision import CollisionSystem 
@@ -41,7 +42,7 @@ def main():
     walls.append(HWall(window.height - menu_height - 1))
 
     # create particles and walls from config file
-    dataMap = main_menu.getConfigData()
+    dataMap = copy.deepcopy(main_menu.config_data)
     for key in dataMap['particles']:
         curr = dataMap['particles'][key]
         n = curr.pop('n')
