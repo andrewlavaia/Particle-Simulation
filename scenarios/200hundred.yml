@@ -1,66 +1,26 @@
 particles:
   '1':
-    n: 60
     color: random
-    radius: 5.0
-    mass: 1.0
-    shape: "Circle"
-    width: 10.0
-    height: 10.0
-  '2':
-    n: 3
-    color: random
-    radius: 40.0
-    mass: 5.0
-    shape: "Circle"
-    width: 80.0
-    height: 80.0
-  '3':
-    n: 50
-    color: black
-    radius: 3.0
-    mass: 0.5
-    shape: "Circle"
-    width: 6.0
     height: 6.0
-walls:
-  '1':
-    p0x: 100.0
-    p0y: 100.0
-    p1x: 200.0
-    p1y: 100.0
+    mass: 0.5
+    n: 50
+    radius: 3.0
+    shape: Circle
+    width: 6.0
   '2':
-    p0x: 200.0
-    p0y: 100.0
-    p1x: 200.0
-    p1y: 200.0
+    color: random
+    height: 20.0
+    mass: 2.0
+    n: 50
+    radius: 10.0
+    shape: Circle
+    width: 20.0
   '3':
-    p0x: 200.0
-    p0y: 200.0
-    p1x: 100.0
-    p1y: 200.0
-  '4':
-    p0x: 100.0
-    p0y: 200.0
-    p1x: 100.0
-    p1y: 100.0
-  '5':
-    p0x: 300.0
-    p0y: 300.0
-    p1x: 400.0
-    p1y: 400.0
-  '6':
-    p0x: 400.0
-    p0y: 400.0
-    p1x: 300.0
-    p1y: 500.0
-  '7':
-    p0x: 300.0
-    p0y: 500.0
-    p1x: 200.0
-    p1y: 400.0
-  '8':
-    p0x: 200.0
-    p0y: 400.0
-    p1x: 300.0
-    p1y: 300.0
+    color: random
+    height: 10.0
+    mass: 1.0
+    n: 100
+    radius: 5.0
+    shape: Circle
+    width: 10.0
+walls: {}

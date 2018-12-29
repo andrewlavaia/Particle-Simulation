@@ -31,10 +31,10 @@ class MainMenu:
 
         environment_header = HeaderText(self.window, Point(850, 30), 'Environment')
 
-        self.input_p0x = InputBox(self.window, Point(750.0, 100.0), 'unsigned_float', 'Point 0:', 4, 10)
-        self.input_p0y = InputBox(self.window, Point(800.0, 100.0), 'unsigned_float', '', 4, 10)
-        self.input_p1x = InputBox(self.window, Point(750.0, 130.0), 'unsigned_float', 'Point 1:', 4,  50) 
-        self.input_p1y = InputBox(self.window, Point(800.0, 130.0), 'unsigned_float', '', 4, 50) 
+        self.input_p0x = InputBox(self.window, Point(750.0, 100.0), 'float', 'Point 0:', 4, 10)
+        self.input_p0y = InputBox(self.window, Point(800.0, 100.0), 'float', '', 4, 10)
+        self.input_p1x = InputBox(self.window, Point(750.0, 130.0), 'float', 'Point 1:', 4,  50) 
+        self.input_p1y = InputBox(self.window, Point(800.0, 130.0), 'float', '', 4, 50) 
         self.add_wall_btn = Button(self.window, Point(950.0, 115.0), 75, 30, 'Add Wall')
 
         ln_0 = Line(Point(0, 250), Point(700, 250))
@@ -59,8 +59,8 @@ class MainMenu:
         self.scenarios.append({'btn': scenario_5_btn, 'file': 'scenarios/wallsaplenty.yml'})
         scenario_6_btn = Button(self.window, Point(940, 625), 120, 30, 'Diffusion')
         self.scenarios.append({'btn': scenario_6_btn, 'file': 'scenarios/diffusion.yml'})
-        scenario_7_btn = Button(self.window, Point(940, 675), 120, 30, 'Volcano')
-        self.scenarios.append({'btn': scenario_7_btn, 'file': 'scenarios/volcano.yml'})
+        scenario_7_btn = Button(self.window, Point(940, 675), 120, 30, 'Picasso')
+        self.scenarios.append({'btn': scenario_7_btn, 'file': 'scenarios/picasso.yml'})
         scenario_8_btn = Button(self.window, Point(940, 725), 120, 30, 'Triangle Split')
         self.scenarios.append({'btn': scenario_8_btn, 'file': 'scenarios/trianglesplit.yml'})
 

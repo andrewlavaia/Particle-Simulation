@@ -63,7 +63,7 @@ class Button(UIBase):
 
 class InputBox(UIBase):
     def __init__(self, canvas, point, input_type, label_text, char_max = 10, default_val = None):
-        allowed_types = ['unsigned_int', 'unsigned_float', 'color']
+        allowed_types = ['unsigned_int', 'unsigned_float', 'color', 'float']
         if input_type not in allowed_types:
             raise Exception('InputBox: type given is not an allowed type')
         
@@ -90,7 +90,9 @@ class InputBox(UIBase):
         elif self.type == 'color':
             flag = (self.getInput() in available_colors or 
                     re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', self.getInput()))
-        
+        elif self.type == 'float':
+            flag = isinstance(float(self.getInput()), float) 
+
         if not flag:
             self.label.setTextColor('red')
         else:
