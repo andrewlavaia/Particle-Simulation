@@ -1,58 +1,26 @@
 particles:
-  '10':
+  '1':
     color: random
-    height: 40.0
-    mass: 3.0
+    height: 10.0
+    mass: 1.0
+    n: 60
+    radius: 5.0
+    shape: Circle
+    width: 10.0
+  '2':
+    color: random
+    height: 80.0
+    mass: 5.0
+    n: 3
+    radius: 40.0
+    shape: Circle
+    width: 80.0
+  '3':
+    color: black
+    height: 6.0
+    mass: 0.5
     n: 50
-    radius: 20.0
+    radius: 3.0
     shape: Circle
-    width: 40.0
-  '14':
-    color: random
-    height: 500.0
-    mass: 100.0
-    n: 1
-    radius: 250.0
-    shape: Circle
-    width: 500.0
-  '4':
-    color: blue
-    height: 10.0
-    mass: 1.0
-    n: 10
-    radius: 5.0
-    shape: Circle
-    width: 10.0
-  '5':
-    color: red
-    height: 10.0
-    mass: 1.0
-    n: 10
-    radius: 5.0
-    shape: Circle
-    width: 10.0
-  '6':
-    color: green
-    height: 10.0
-    mass: 1.0
-    n: 10
-    radius: 5.0
-    shape: Circle
-    width: 10.0
-  '7':
-    color: purple
-    height: 10.0
-    mass: 1.0
-    n: 10
-    radius: 5.0
-    shape: Circle
-    width: 10.0
-  '8':
-    color: yellow
-    height: 10.0
-    mass: 1.0
-    n: 10
-    radius: 5.0
-    shape: Circle
-    width: 10.0
+    width: 6.0
 walls: {}
