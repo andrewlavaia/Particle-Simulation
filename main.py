@@ -14,6 +14,7 @@ from collision import CollisionSystem
 from particles import Particle, ParticleShape, ParticleFactory
 from walls import *
 from menu import MainMenu
+import file_utils
 
 # import os
 # import pdb
@@ -140,5 +141,7 @@ if __name__ == '__main__':
         workers.append(mp.Process(target=CollisionSystem.processWorkRequests, args=(work_requested_q, work_completed_q)))
         workers[n].daemon = True
         workers[n].start()
+
+    main_menu.config_data = file_utils.load_config('scenarios/standard.yml')
 
     main()
