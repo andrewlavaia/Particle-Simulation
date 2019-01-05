@@ -233,7 +233,7 @@ class Particle:
                 if self.vx != 0.0:
                     dist = collision_point.x - p.x
                     time_until_collision = dist / self.vx
-                else:
+                elif self.vy != 0.0:
                     dist = collision_point.y - p.y
                     time_until_collision = dist / self.vy
             collision_times.append(time_until_collision)

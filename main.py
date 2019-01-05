@@ -70,8 +70,6 @@ def main():
 
     for particle in particles:
         CollisionSystem.predict(particle, 0.0, 10000, particles, walls, work_completed_q)
-    while not work_requested_q.empty():
-        pass
 
     # initialize simulation variables
     simTime = 0.0
@@ -100,8 +98,6 @@ def main():
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
-                # assert(particle.x >= 0 - 100 and particle.x <= window.width + 100)  
-                # assert(particle.y >= 0 - 100 and particle.y <= window.height + 100)
             
             for particle_shape in particle_shapes:
                 particle_shape.x = particles[particle_shape.index].x
@@ -143,5 +139,6 @@ if __name__ == '__main__':
         workers[n].start()
 
     main_menu.config_data = file_utils.load_config('scenarios/standard.yml')
+    time.sleep(0.5)
 
     main()

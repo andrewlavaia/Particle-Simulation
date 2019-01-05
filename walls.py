@@ -34,6 +34,10 @@ class LineSegment(WallBase):
         s0 = Point(p1.x - p0.x, p1.y - p0.y)
         s1 = Point(q1.x - q0.x, q1.y - q0.y)
 
+        # lines are parallel
+        if (s0.x == 0.0 and s1.x == 0.0) or (s0.y == 0.0 and s1.y == 0.0):
+            return None
+
         try:
             s = (-s0.y * (p0.x - q0.x) + s0.x * (p0.y - q0.y)) / (-s1.x * s0.y + s0.x * s1.y)
             t = ( s1.x * (p0.y - q0.y) - s1.y * (p0.x - q0.x)) / (-s1.x * s0.y + s0.x * s1.y)            
