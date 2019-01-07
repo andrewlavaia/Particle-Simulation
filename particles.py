@@ -58,9 +58,6 @@ class Particle:
         self.shape_type = shape
         self.color = color
 
-        # set limits on speed and collisions
-        # self.max_speed = 1000000.0
-
         self.collisionCnt = 0               # number of collisions - used to
                                             # check whether event has become
                                             # invalidated
@@ -79,59 +76,17 @@ class Particle:
         return math_utils.degrees_clockwise(self.vy, self.vx)
 
     def distFromCenter(self, deg):
-        if self.shape_type == "Circle":
-            return self.radius
-
-        twoPI = math.pi * 2
-        theta = deg * math.pi / 180
-
-        while theta < -math.pi:
-            theta += twoPI
-
-        while theta > math.pi:
-            theta -= twoPI
-
-        rectAtan = math.atan2(self.height, self.width)
-        tanTheta = math.tan(theta)
-
-        region = 0
-        if (theta > -rectAtan) and (theta <= rectAtan):
-            region = 1
-        elif (theta > rectAtan) and (theta <= (math.pi - rectAtan)):
-            region = 2
-        elif (theta > (math.pi - rectAtan)) or (theta <= -(math.pi - rectAtan)):
-            region = 3
-        else:
-            region = 4
-
-        edgePoint = Point(self.width/2.0, self.height/2.0)
-        xFactor = 1
-        yFactor = 1
-
-        if region == 1 or region == 2:
-            yFactor = -1
-        elif region == 3 or region == 4:
-            xFactor = -1
-
-        if region == 1 or region == 3:
-            edgePoint.x = edgePoint.x + (xFactor * (self.width / 2.0))                # "Z0"
-            edgePoint.y = edgePoint.y + (yFactor * (self.width / 2.0) * tanTheta)
-        else:
-            edgePoint.x = edgePoint.x + (xFactor * (self.height / (2.0 * tanTheta)))  # "Z1"
-            edgePoint.y = edgePoint.y + (yFactor * (self.height /  2.0))
-
-        return math_utils.pythag(edgePoint.x - (self.width/2.0),
-                                edgePoint.y - (self.height/2.0))
+        return self.radius
 
     # Calculates time until collision with another Particle
-
-    # Need a new collision detection algorithm for rectangles...
-    #  This algo is not computing correctly for long rectangles
-    #  because it is computing the angle from the center
-    #  and not the edge (ie particle traveling straight up
-    #  won't hit left or right edges of long rectangle because
-    #  the angle calc tells it to use the vertical distance)
     def timeToHit(self, that):
+        # Need a new collision detection algorithm for rectangles...
+        #  This algo is not computing correctly for long rectangles
+        #  because it is computing the angle from the center
+        #  and not the edge (ie particle traveling straight up
+        #  won't hit left or right edges of long rectangle because
+        #  the angle calc tells it to use the vertical distance)
+
         # distance
         dx = that.x - self.x # switch to distance between nearest points?
         dy = that.y - self.y
@@ -210,7 +165,7 @@ class Particle:
         
     def timeToHitLineSegment(self, line):
         # build a series of projected paths from evenly spaced points 
-        # along half of the circle (as determined by direction it is moving)
+        # along half of the particle (as determined by direction it is moving)
         # number of paths should be based on radius as larger particles require more precision
         collision_times = []
         num_times_to_compute = min(int(self.radius) + 5, 31)
@@ -222,7 +177,7 @@ class Particle:
         for i in range(0, num_times_to_compute):
             new_deg = start_deg + (i * degree_interval) 
             adj = Point(self.radius * math.sin(math.radians(new_deg)), 
-                        self.radius * math.cos(math.radians(new_deg)))
+                      self.radius * math.cos(math.radians(new_deg)))
             p = Point(self.x + adj.x, self.y + adj.y) 
             q = Point(p.x + (scalar_factor * self.vx), 
                       p.y + (scalar_factor * self.vy))
@@ -244,17 +199,6 @@ class Particle:
     def moveByForce(self, that, fx, fy):
         self.vx = self.vx + (fx / self.mass)
         self.vy = self.vy + (fy / self.mass)
-
-        # limit speed to max speed
-        # if self.vx > self.max_speed:
-        #     self.vx = self.max_speed
-        # elif self.vx < -1 * self.max_speed:
-        #     self.vx = -1 * self.max_speed
-        # if self.vy > self.max_speed:
-        #     self.vy = self.max_speed
-        # elif self.vy < -1 * self.max_speed:
-        #     self.vy = -1 * self.max_speed
-
         self.collisionCnt = self.collisionCnt + 1
 
     # adjusts velocity vectors of two objects after a collision
@@ -313,8 +257,9 @@ class Particle:
         self.collisionCnt = self.collisionCnt + 1
         self.last_collided_line = line
 
+
 class Immovable(Particle):
-    def __init__(self, window,
+    def __init__(self, index, window,
         radius = None, x = None, y = None, color = None):
 
         # call base class constructor
@@ -341,14 +286,64 @@ class Immovable(Particle):
     def bounceOffHWall(self):
         pass
 
+
 class RectParticle(Particle):
-    def __init__(self, window, radius = None,
+    def __init__(self, index, window, radius = None,
         x = None, y = None, vx = None, vy = None,
-        mass = None, color = None, width = None, height = None):
+        mass = None, color = None, shape = "Rect", width = None, height = None):
 
-        super().__init__(window, radius, x, y, vx, vy, mass, color,
-            shape = "Rect", width = width, height = height)
+        super().__init__(index, window, radius, x, y, vx, vy, mass, color,
+            shape = shape, width = width, height = height)
 
+        self.radius = self.width/2
+
+    def getEdgePoint(self, deg):
+        twoPI = math.pi * 2
+        theta = deg * math.pi / 180
+
+        while theta < -math.pi:
+            theta += twoPI
+
+        while theta > math.pi:
+            theta -= twoPI
+
+        rectAtan = math.atan2(self.height, self.width)
+        tanTheta = math.tan(theta)
+
+        region = 0
+        if (theta > -rectAtan) and (theta <= rectAtan):
+            region = 1
+        elif (theta > rectAtan) and (theta <= (math.pi - rectAtan)):
+            region = 2
+        elif (theta > (math.pi - rectAtan)) or (theta <= -(math.pi - rectAtan)):
+            region = 3
+        else:
+            region = 4
+
+        edgePoint = Point(self.width/2.0, self.height/2.0)
+        xFactor = 1
+        yFactor = 1
+
+        if region == 1 or region == 2:
+            yFactor = -1
+        elif region == 3 or region == 4:
+            xFactor = -1
+
+        if region == 1 or region == 3:
+            edgePoint.x = edgePoint.x + (xFactor * (self.width / 2.0))                # "Z0"
+            edgePoint.y = edgePoint.y + (yFactor * (self.width / 2.0) * tanTheta)
+        else:
+            edgePoint.x = edgePoint.x + (xFactor * (self.height / (2.0 * tanTheta)))  # "Z1"
+            edgePoint.y = edgePoint.y + (yFactor * (self.height /  2.0))
+
+        return edgePoint
+
+    def distFromCenter(self, deg):
+        edgePoint = self.getEdgePoint(deg)
+        return math_utils.pythag(edgePoint.x - (self.width/2.0),
+                                edgePoint.y - (self.height/2.0))
+
+    # Need a new timeToHitLineSegment to account for corners
 
 # Defines a shape object to be used for drawing the 
 # corresponding Particle object with the same index
@@ -363,9 +358,9 @@ class ParticleShape():
         self.height = particle.height
         self.width = particle.width
 
-        if particle.shape_type == "Circle":
+        if particle.shape_type in ["Circle", "circle"]:
             self.shape = Circle(Point(self.x, self.y), self.radius)
-        elif particle.shape_type == "Rect":
+        elif particle.shape_type in ["Square", "square", "Rect", "rect"]:
             self.shape = Rectangle(Point(self.x - self.width/2.0, self.y - self.height/2.0),
                 Point(self.x + self.width/2.0, self.y + self.height/2.0))
         else:
@@ -388,7 +383,10 @@ class ParticleFactory:
         self.count = 0
 
     def create(self, **kwargs):
-        self.particles.append(Particle(self.count, self.window, **kwargs))
+        if kwargs.get('shape') in ["Square", "square", "Rect", "rect"]:
+            self.particles.append(RectParticle(self.count, self.window, **kwargs))        
+        else:
+            self.particles.append(Particle(self.count, self.window, **kwargs))
         self.particle_shapes.append(ParticleShape(self.count, self.window, self.particles[self.count]))
         self.count += 1
 

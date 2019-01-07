@@ -45,8 +45,8 @@ class TestParticle(unittest.TestCase):
         self.c = Particle(2, self.window, x = 10.0, y = 10.0, vx = 0, vy = 0, radius = 5.0)
         self.d = Particle(3, self.window, x = 100, y = 75.0, vx = 0.0, vy = 10, radius = 5.0)
         self.e = Particle(4, self.window, x = 100, y = 500.0, vx = 0.0, vy = -10, radius = 5.0)
-        self.f = Particle(5, self.window, width = 20.0, height = 20.0, x = 160, y = 500, vx = 0, vy = 0, shape = "Rect")
-        self.g = Particle(6, self.window, width = 40.0, height = 20.0, x = 160, y = 700, vx = 0, vy = 0, shape = "Rect")
+        self.f = RectParticle(5, self.window, width = 20.0, height = 20.0, x = 160, y = 500, vx = 0, vy = 0)
+        self.g = RectParticle(6, self.window, width = 40.0, height = 20.0, x = 160, y = 700, vx = 0, vy = 0)
         self.h = Particle(7, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 20.0, radius = 5.0)
         self.i = Particle(8, self.window, x = 40.0, y = 40.0, vx = -5.0, vy = 10.0, radius = 5.0)
         self.j = Particle(9, self.window, x = 40.0, y = 40.0, vx = 10.0, vy = 2.0, radius = 5.0)
@@ -253,7 +253,7 @@ class TestParticle(unittest.TestCase):
         self.assertTrue(round(m2.x, 10) == 2.5 and round(m2.y, 10) == 2.5)
         self.assertTrue(round(m3.x, 10) == 1.0 and round(m3.y, 10) == 1.0)
         self.assertTrue(round(m4.x, 10) == 3.2 and round(m4.y, 10) == 2.6)
-
+    
 class TestLineSegment(unittest.TestCase):    
     def test_line_intersection(self):
         p0 = Point(0.0, 0.0)

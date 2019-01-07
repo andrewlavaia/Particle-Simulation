@@ -16,9 +16,6 @@ from walls import *
 from menu import MainMenu
 import file_utils
 
-# import os
-# import pdb
-
 def main():
     window.setBackground('white')
     window.clear()
@@ -122,6 +119,7 @@ def cleanup():
 
 if __name__ == '__main__':
     window = GraphWin('Particle Simulation', 1024, 768, autoflush=False)
+    file_utils.set_config(file_utils.load_config('scenarios/standard.yml'))
     main_menu = MainMenu(window, main)
     menu_options = {"New": main_menu.run, "Restart": main, "Exit": cleanup}
     window.addMenu(menu_options)
@@ -138,7 +136,6 @@ if __name__ == '__main__':
         workers[n].daemon = True
         workers[n].start()
 
-    main_menu.config_data = file_utils.load_config('scenarios/standard.yml')
-    time.sleep(0.5)
+    time.sleep(0.5) # delay startup to give workers time to initialize
 
     main()

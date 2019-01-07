@@ -8,7 +8,7 @@ class MainMenu:
         self.callback = callback
         self.config_data = file_utils.load_config('config.yml')
         
-        self.particle_table = ParticleTable(Table(self.window, Point(350, 350)), self.config_data)
+        self.particle_table = ParticleTable(Table(self.window, Point(275, 350)), self.config_data)
         self.wall_table = WallTable(Table(self.window, Point(710, 175), 20, 110), self.config_data)
         self.scenarios = []
 
@@ -23,11 +23,12 @@ class MainMenu:
         self.simulation_btn = Button(self.window, Point(350, 135), 200, 100, 'Run Simulation')
 
         particle_header = HeaderText(self.window, Point(350, 290), 'Particles')
-        self.input_n = InputBox(self.window, Point(100.0, 350.0), 'unsigned_int', '# of particles: ', 4, 40)
-        self.input_color = InputBox(self.window, self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'black')
+        self.input_n = InputBox(self.window, Point(80.0, 350.0), 'unsigned_int', '# of particles: ', 4, 40)
+        self.input_color = InputBox(self.window, self.input_n.getPointWithOffset(), 'color', 'color: ', 10, 'random')
         self.input_r = InputBox(self.window, self.input_color.getPointWithOffset(), 'unsigned_float', 'radius: ', 4,  5.0) 
         self.input_m = InputBox(self.window, self.input_r.getPointWithOffset(), 'unsigned_float', 'mass: ', 4,  1.0) 
-        self.add_group_btn = Button(self.window, Point(self.input_m.point.x + 30, self.input_m.point.y + 60), 150, 30, 'Add Group')
+        self.input_shape = InputBox(self.window, self.input_m.getPointWithOffset(), 'shape', 'shape: ', 6,  'Circle') 
+        self.add_group_btn = Button(self.window, Point(self.input_shape.point.x + 30, self.input_shape.point.y + 60), 150, 30, 'Add Group')
 
         environment_header = HeaderText(self.window, Point(850, 30), 'Environment')
 
@@ -79,7 +80,8 @@ class MainMenu:
                     color = self.input_color.getInput()
                     r = self.input_r.getInput()
                     m = self.input_m.getInput()
-                    self.particle_table.insertFromInputs(n, color, r, m)
+                    shape = self.input_shape.getInput()
+                    self.particle_table.insertFromInputs(n, color, r, m, shape)
                 
                 elif self.add_wall_btn.clicked(last_clicked_pt) and self.validInputs():
                     p0x = self.input_p0x.getInput()
@@ -99,11 +101,11 @@ class MainMenu:
                             self.wall_table.setData(self.config_data)     
     
     def setConfigData(self):
-        data = {
+        self.config_data = {
             'particles': self.particle_table.data_dict, 
             'walls': self.wall_table.data_dict
         }
-        file_utils.set_config(data) 
+        file_utils.set_config(self.config_data) 
 
     def pause(self):
         message = Text(Point(self.window.width/2.0, self.window.height/2.0 - 50.0), 'Paused')
@@ -118,6 +120,7 @@ class MainMenu:
                 self.input_color.validateInput() and \
                 self.input_r.validateInput() and \
                 self.input_m.validateInput() and \
+                self.input_shape.validateInput() and \
                 self.input_p0x.validateInput() and \
                 self.input_p0y.validateInput() and \
                 self.input_p1x.validateInput() and \
@@ -161,13 +164,13 @@ class ParticleTable(ConfigTableBase):
 
     def loadRowsFromConfig(self):
         self.table.deleteAllRows()
-        self.table.addRow("id", "quantity", "color", "radius", "mass")
+        self.table.addRow("id", "quantity", "color", "radius", "mass", "shape")
         for name, data in self.data_dict.items():
             key = int(name)
             self.row_cntr = key if key > self.row_cntr else self.row_cntr
-            self.table.addRow(key, data['n'], data['color'], data['radius'], data['mass'])
+            self.table.addRow(key, data['n'], data['color'], data['radius'], data['mass'], data['shape'])
 
-    def insertFromInputs(self, n, color, r, m):
+    def insertFromInputs(self, n, color, r, m, shape):
         self.row_cntr += 1
         group_name = str(self.row_cntr)
         group = { 
@@ -176,13 +179,13 @@ class ParticleTable(ConfigTableBase):
                 'color': color,
                 'radius': float(r),
                 'mass': float(m),
-                'shape': 'Circle',
+                'shape': shape,
                 'width': float(r) * 2,
                 'height': float(r) * 2
             }
         }
         self.data_dict.update(group)
-        self.table.addRow(self.row_cntr, n, color, r, m)
+        self.table.addRow(self.row_cntr, n, color, r, m, shape)
 
 
 class WallTable(ConfigTableBase):
