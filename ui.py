@@ -3,7 +3,8 @@ from abc import ABCMeta, abstractmethod
 from graphics import *
 from colors import available_colors
 
-class UIBase(metaclass = ABCMeta):
+
+class UIBase(metaclass=ABCMeta):
     @abstractmethod
     def draw(self):
         """Draws object on self.canvas"""
@@ -21,13 +22,13 @@ class Button(UIBase):
     def __init__(self, canvas, center, width, height, label):
         """ Creates a rectangular button """
         self.canvas = canvas
-        w,h = width/2.0, height/2.0
-        x,y = center.getX(), center.getY()
+        w, h = width/2.0, height/2.0
+        x, y = center.getX(), center.getY()
         self.xmax, self.xmin = x+w, x-w
         self.ymax, self.ymin = y+h, y-h
         p1 = Point(self.xmin, self.ymin)
         p2 = Point(self.xmax, self.ymax)
-        self.rect = Rectangle(p1,p2)
+        self.rect = Rectangle(p1, p2)
         self.rect.setFill('lightgray')
         self.label = Text(center, label)
         self.draw()
@@ -35,9 +36,9 @@ class Button(UIBase):
 
     def clicked(self, p):
         """ RETURNS true if button active and p is inside"""
-        return self.active and \
-               self.xmin <= p.getX() <= self.xmax and \
-               self.ymin <= p.getY() <= self.ymax
+        return (self.active and
+                self.xmin <= p.getX() <= self.xmax and
+                self.ymin <= p.getY() <= self.ymax)
 
     def getLabel(self):
         return self.label.getText()
@@ -62,20 +63,19 @@ class Button(UIBase):
 
 
 class InputBox(UIBase):
-    def __init__(self, canvas, point, input_type, label_text, char_max = 10, default_val = None):
+    def __init__(self, canvas, point, input_type, label_text, char_max=10, default_val=None):
         allowed_types = ['unsigned_int', 'unsigned_float', 'color', 'float', 'shape']
         if input_type not in allowed_types:
             raise Exception('InputBox: type given is not an allowed type')
-        
+
         self.canvas = canvas
         self.point = point
         self.type = input_type
         self.label = Text(point, label_text)
-        x_offset = 100 + ((char_max - 10)/2.0 * 9) # difference between default char_max and font size / 2
+        x_offset = 100 + ((char_max - 10)/2.0 * 9)  # diff b/t default char_max and font_size / 2
         self.entry = Entry(Point(point.x + x_offset, point.y), char_max)
         if default_val is not None:
             self.setInput(default_val)
-        
         self.draw()
 
     def getInput(self):
@@ -86,12 +86,12 @@ class InputBox(UIBase):
         if self.type == 'unsigned_int':
             flag = isinstance(int(self.getInput()), int) and int(self.getInput()) > 0
         elif self.type == 'unsigned_float':
-            flag = isinstance(float(self.getInput()), float) and float(self.getInput()) > 0 
+            flag = isinstance(float(self.getInput()), float) and float(self.getInput()) > 0
         elif self.type == 'color':
-            flag = (self.getInput() in available_colors or 
+            flag = (self.getInput() in available_colors or
                     re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', self.getInput()))
         elif self.type == 'float':
-            flag = isinstance(float(self.getInput()), float) 
+            flag = isinstance(float(self.getInput()), float)
         elif self.type == 'shape':
             flag = self.getInput() in ['Circle', 'circle', 'Square', 'square']
 
@@ -99,9 +99,8 @@ class InputBox(UIBase):
             self.label.setTextColor('red')
         else:
             self.label.setTextColor('black')
-        
         return flag
-                
+
     def setInput(self, val):
         self.entry.setText(val)
         if self.validateInput() is not True:
@@ -110,13 +109,14 @@ class InputBox(UIBase):
     def draw(self):
         self.label.draw(self.canvas)
         self.entry.draw(self.canvas)
-    
+
     def undraw(self):
         self.label.undraw()
-        self.entry.undraw()        
+        self.entry.undraw()
 
     def getPointWithOffset(self):
         return Point(self.point.x, self.point.y + 30)
+
 
 class Table(UIBase):
     def __init__(self, canvas, point, row_height=30, col_width=70):
@@ -137,7 +137,7 @@ class Table(UIBase):
                 row.undraw()
                 self.rows.remove(row)
         self.redraw()
-    
+
     def deleteAllRows(self):
         for row in self.rows:
             row.undraw()
@@ -151,8 +151,8 @@ class Table(UIBase):
             for j in range(len(row.values)):
                 offset.x = self.point.x + (j * self.col_width)
                 row.labels.append(Text(offset, row.values[j]))
-            if i > 0: 
-                offset.x = self.point.x + (len(row.values) * self.col_width) - 30            
+            if i > 0:
+                offset.x = self.point.x + (len(row.values) * self.col_width) - 30
                 row.button = Button(self.canvas, offset, 15, 15, '-')
             row.draw()
 
@@ -171,7 +171,7 @@ class TableRow(UIBase):
     def draw(self):
         for label in self.labels:
             label.draw(self.canvas)
-        
+
     def undraw(self):
         for label in self.labels:
             label.undraw()
@@ -181,13 +181,13 @@ class TableRow(UIBase):
         self.labels.clear()
         self.button = None
 
+
 class HeaderText(UIBase):
     def __init__(self, canvas, point, text):
         self.canvas = canvas
         self.text = Text(point, text)
         self.text.setSize(24)
         self.text.setStyle('bold')
-        
         self.draw()
 
     def draw(self):

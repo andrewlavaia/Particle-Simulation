@@ -1,7 +1,7 @@
 '''
 Program: main.py
-Runs a particle simulation that draws 
-different types of particles colliding 
+Runs a particle simulation that draws
+different types of particles colliding
 with one another
 '''
 import time
@@ -10,11 +10,12 @@ import multiprocessing as mp
 import copy
 
 from graphics import GraphWin, Point, Line
-from collision import CollisionSystem 
+from collision import CollisionSystem
 from particles import Particle, ParticleShape, ParticleFactory
 from walls import *
 from menu import MainMenu
 import file_utils
+
 
 def main():
     window.setBackground('white')
@@ -62,7 +63,7 @@ def main():
         elif wall.wall_type == "HWall":
             ln = Line(Point(0, wall.y), Point(window.width, wall.y))
         else:
-            ln = Line(wall.p0, wall.p1)   
+            ln = Line(wall.p0, wall.p1)
         ln.draw(window)
 
     for particle in particles:
@@ -71,8 +72,8 @@ def main():
     # initialize simulation variables
     simTime = 0.0
     limit = 10000
-    TICKS_PER_SECOND = 60 # how often collisions are checked 
-    TIME_PER_TICK = 1.0/TICKS_PER_SECOND # in seconds
+    TICKS_PER_SECOND = 60  # how often collisions are checked
+    TIME_PER_TICK = 1.0/TICKS_PER_SECOND  # in seconds
     nextLogicTick = TIME_PER_TICK
     lastFrameTime = time.time()
     lag = 0.0
@@ -91,31 +92,33 @@ def main():
 
         while lag > TIME_PER_TICK:
             CollisionSystem.processCompletedWork(work_completed_q, pq)
-            CollisionSystem.processCollisionEvents(particles, walls, pq, nextLogicTick, work_requested_q, work_completed_q)
+            CollisionSystem.processCollisionEvents(particles, walls, pq, nextLogicTick,
+                                                   work_requested_q, work_completed_q)
 
             for particle in particles:
                 particle.move(TIME_PER_TICK)  # moves each particle in linear line
-            
+
             for particle_shape in particle_shapes:
                 particle_shape.x = particles[particle_shape.index].x
                 particle_shape.y = particles[particle_shape.index].y
-            
+
             nextLogicTick += TIME_PER_TICK
             lag -= TIME_PER_TICK
 
         # render updates to window
         for particle_shape in particle_shapes:
-            particle_shape.render()  
+            particle_shape.render()
 
     window.close
+
 
 def cleanup():
     window.close()
     while not work_requested_q.empty():
         work_requested_q.get_nowait()
     while not work_completed_q.empty():
-        work_completed_q.get_nowait() 
-    sys.exit()   
+        work_completed_q.get_nowait()
+    sys.exit()
 
 if __name__ == '__main__':
     window = GraphWin('Particle Simulation', 1024, 768, autoflush=False)
@@ -132,10 +135,11 @@ if __name__ == '__main__':
     num_workers = 4
     workers = []
     for n in range(0, num_workers):
-        workers.append(mp.Process(target=CollisionSystem.processWorkRequests, args=(work_requested_q, work_completed_q)))
+        workers.append(mp.Process(target=CollisionSystem.processWorkRequests,
+                                  args=(work_requested_q, work_completed_q)))
         workers[n].daemon = True
         workers[n].start()
 
-    time.sleep(0.5) # delay startup to give workers time to initialize
+    time.sleep(0.5)  # delay startup to give workers time to initialize
 
     main()
